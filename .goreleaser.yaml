@@ -1,4 +1,5 @@
 version: 2
+
 project_name: aseprite-cli
 
 before:
@@ -9,6 +10,7 @@ before:
 builds:
   - env:
       - CGO_ENABLED=0
+    binary: aseprite-assets
     goos:
       - linux
       - windows
