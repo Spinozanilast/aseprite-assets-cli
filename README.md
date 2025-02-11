@@ -11,7 +11,7 @@
 </div>
 
 ## Description
-CLI interface for aseprite assets interaction. For in-terminal opening of aseprite files.
+CLI interface for aseprite assets interaction. For in-terminal opening of aseprite files and more.
 
 ## Commands Tree
 
