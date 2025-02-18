@@ -28,3 +28,6 @@ go.work.sum
 .vscode
 # Added by goreleaser init:
 dist/
+
+#for local lua files run
+scripts/*.local.lua

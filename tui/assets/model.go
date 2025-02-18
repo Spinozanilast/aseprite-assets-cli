@@ -222,6 +222,12 @@ func (m *model) currentAssets() []string {
 func (m *model) updateFolderMetadata() {
 	total := len(m.assetsFolders)
 
+	if total == 1 {
+		m.prevFolderName = ""
+		m.nextFolderName = ""
+		return
+	}
+
 	prevIndex := (m.activeFolderIdx - 1 + total) % total
 	nextIndex := (m.activeFolderIdx + 1) % total
 
