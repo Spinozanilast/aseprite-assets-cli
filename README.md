@@ -1,4 +1,3 @@
-
 <div align="center">
 
 [![Release](https://github.com/Spinozanilast/aseprite-assets-cli/actions/workflows/release.yml/badge.svg)](https://github.com/Spinozanilast/aseprite-assets-cli/actions/workflows/release.yml)
@@ -24,10 +23,17 @@ aseprite-assets
 │   ├── edit: Edit configuration using a TUI
 │   └── open: Open configuration file
 │       └── --app-path (-a): Specify app to open the config file
+├── create (cr) [ARG]
+│   └── Create a new aseprite asset with the specified options
+│       ├── --name (-n): The name of the asset
+│       ├── --ui (-u): Whether to open aseprite after asset creation
+│       ├── --width (-w): The width of the asset
+│       ├── --height: The height of the asset
+│       ├── --mode (-m): The color mode of the asset (indexed, rgb, gray, tilemap)
+│       └── --path (-p): The output path for the asset
 ```
 
-
-## 
+## Installation
 
 ### From Releases 
 1. Download the latest release from [here](https://github.com/Spinozanilast/aseprite-assets-cli/releases/latest)
@@ -37,6 +43,34 @@ aseprite-assets
    
 ```pwsh
 aseprite-assets --help
+```
+
+## Usage Examples
+
+### List Assets
+To list all existing aseprite assets, use:
+```sh
+aseprite-assets list
+```
+
+### Configure CLI
+To display the current configuration:
+```sh
+aseprite-assets config info
+```
+To edit the configuration using a TUI:
+```sh
+aseprite-assets config edit
+```
+To open the configuration file with a specific application:
+```sh
+aseprite-assets config open --app-path "path/to/application"
+```
+
+### Create Asset
+To create a new aseprite asset:
+```sh
+aseprite-assets create --name "new_asset" --width 64 --height 64 --mode "rgb" --path "path/to/save"
 ```
 
 ## TO DO
