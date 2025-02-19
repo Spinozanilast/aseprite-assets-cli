@@ -3,6 +3,8 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"math"
+	"strconv"
 	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
@@ -104,6 +106,21 @@ func init() {
 }
 
 func createAssetQuestions(dirs []string) []*survey.Question {
+	sizesSuggestions := func(toComplete string) []string {
+		num, _ := strconv.Atoi(toComplete)
+		if toComplete == "" || (num <= 0 && num >= 10) {
+			return []string{"16", "32", "64", "128", "256", "512", "1024", "Custom"}
+		}
+
+		floated := float64(num)
+		var suggestions []string
+		for i := 1; i <= 7; i++ {
+			suggestion := fmt.Sprintf("%d", int(math.Pow(floated, float64(i))))
+			suggestions = append(suggestions, suggestion)
+		}
+		return suggestions
+	}
+
 	questions := []*survey.Question{
 		{
 			Name: "name",
@@ -124,6 +141,7 @@ func createAssetQuestions(dirs []string) []*survey.Question {
 			Prompt: &survey.Input{
 				Message: "Width",
 				Default: "32",
+				Suggest: sizesSuggestions,
 			},
 		},
 		{
@@ -131,6 +149,7 @@ func createAssetQuestions(dirs []string) []*survey.Question {
 			Prompt: &survey.Input{
 				Message: "Height",
 				Default: "32",
+				Suggest: sizesSuggestions,
 			},
 		},
 		{
@@ -158,7 +177,7 @@ func collectCreateOptions(saveDirs []string) (*AssetCreateOptions, error) {
 	err := survey.Ask(createAssetQuestions(saveDirs), opts)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to collect create options: %w", err)
 	}
 
 	return opts, nil
@@ -181,12 +200,12 @@ func validateCreateOptions(opts *AssetCreateOptions) error {
 }
 
 func showSummary(opts *AssetCreateOptions) {
-	fmt.Printf("Asset configuration summary:\n")
+	fmt.Printf("\nAsset configuration summary:\n")
 	fmt.Printf("Name: %v\n", opts.AssetName)
 	fmt.Printf("UI: %v\n", opts.Ui)
 	fmt.Printf("Width: %v\n", opts.Width)
 	fmt.Printf("Height: %v\n", opts.Height)
 	fmt.Printf("Color mode: %v\n", opts.ColorMode)
 	fmt.Printf("Output path: %v\n", opts.OutputPath)
-	fmt.Println("✓ Asset created successfully")
+	fmt.Println("\n✓ Asset created successfully")
 }
