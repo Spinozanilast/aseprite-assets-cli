@@ -3,6 +3,7 @@ package util
 import (
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"github.com/ncruces/zenity"
 	"github.com/skratchdot/open-golang/open"
@@ -76,6 +77,23 @@ func CheckAnyFileOfExtensionExists(folderPath string, extension string) (bool, e
 	} else {
 		return false, fmt.Errorf("folder (%s) doesnt has any file of %s extension", folderPath, extension)
 	}
+}
+
+func EnsureFileExtension(filename, extension string) string {
+	extension = prefExtension(extension)
+
+	if !strings.HasPrefix(extension, ".") {
+		extension = "." + extension
+	}
+
+	if filepath.Ext(filename) != "" {
+		if filepath.Ext(filename) != extension {
+			return strings.TrimSuffix(filename, filepath.Ext(filename)) + extension
+		}
+		return filename
+	}
+
+	return filename + extension
 }
 
 func prefExtension(extension string) string {

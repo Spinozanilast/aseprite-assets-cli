@@ -388,7 +388,7 @@ func (m *model) ToConfig() error {
 		assetsDirs[i] = dirFld.Value()
 	}
 
-	return config.SaveConfig(appPath, assetsDirs)
+	return config.SavePaths(appPath, assetsDirs)
 }
 
 func (m *model) allFieldsValid() bool {

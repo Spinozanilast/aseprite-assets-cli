@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -8,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spinozanilast/aseprite-assets-cli/aseprite"
 	config "github.com/spinozanilast/aseprite-assets-cli/config"
+	"github.com/spinozanilast/aseprite-assets-cli/util"
 )
 
 type AssetCreateOptions struct {
@@ -19,34 +21,66 @@ type AssetCreateOptions struct {
 	OutputPath string `survey:"path"`
 }
 
+var (
+	assetName  string
+	ui         bool
+	width      int
+	height     int
+	colorMode  string
+	outputPath string
+)
+
 var createCmd = &cobra.Command{
 	Use:     "create [ARG]",
 	Aliases: []string{"cr"},
 	Short:   "Create aseprite asset",
+	Long: `Create a new aseprite asset with the specified options.
+
+Available arguments:
+  name       - The name of the asset.
+  ui         - Whether to open aseprite after asset creation.
+  width      - The width of the asset.
+  height     - The height of the asset.
+  mode       - The color mode of the asset (indexed, rgb, gray, tilemap).
+  path       - The output path for the asset.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		config, err := config.LoadConfig()
 		if err != nil {
 			return err
 		}
 
-		asepritePath := config.AsepritePath
-		opts, err := collectCreateOptions(config.AssetsFolderPaths)
-		if err != nil {
+		opts := &AssetCreateOptions{
+			AssetName:  assetName,
+			Ui:         ui,
+			Width:      width,
+			Height:     height,
+			ColorMode:  colorMode,
+			OutputPath: outputPath,
+		}
+
+		if opts.AssetName == "" || opts.OutputPath == "" {
+			opts, err = collectCreateOptions(config.AssetsFolderPaths)
+			if err != nil {
+				return err
+			}
+		}
+
+		if err := validateCreateOptions(opts); err != nil {
 			return err
 		}
 
-		asepriteCli := aseprite.NewAsepriteCLI(asepritePath)
+		asepriteCli := aseprite.NewAsepriteCLI(config.AsepritePath, config.ScriptDirPath)
 		err = asepriteCli.CheckPrerequisites()
 		if err != nil {
 			return err
 		}
 
-		err = asepriteCli.CreateAsset(aseprite.AsepriteAssetCreateCommand{
+		err = asepriteCli.ExecuteCommand(&aseprite.AsepriteAssetCreateCommand{
 			Ui:         opts.Ui,
 			Width:      opts.Width,
 			Height:     opts.Height,
 			ColorMode:  opts.ColorMode,
-			OutputPath: opts.OutputPath + "\\" + strings.TrimSpace(opts.AssetName) + ".aseprite",
+			OutputPath: opts.OutputPath + "\\" + util.EnsureFileExtension(strings.TrimSpace(opts.AssetName), aseprite.AsepriteFilesExtension),
 		})
 
 		if err != nil {
@@ -61,6 +95,12 @@ var createCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(createCmd)
+	createCmd.Flags().StringVarP(&assetName, "name", "n", "", "name of the asset")
+	createCmd.Flags().BoolVarP(&ui, "ui", "u", false, "open aseprite after asset creation")
+	createCmd.Flags().IntVarP(&width, "width", "w", 32, "width of the asset")
+	createCmd.Flags().IntVar(&height, "height", 32, "height of the asset") // Changed shorthand to 't'
+	createCmd.Flags().StringVarP(&colorMode, "mode", "m", "rgb", "color mode of the asset (indexed, rgb, gray, tilemap)")
+	createCmd.Flags().StringVarP(&outputPath, "path", "p", "", "output path for the asset")
 }
 
 func createAssetQuestions(dirs []string) []*survey.Question {
@@ -122,6 +162,22 @@ func collectCreateOptions(saveDirs []string) (*AssetCreateOptions, error) {
 	}
 
 	return opts, nil
+}
+
+func validateCreateOptions(opts *AssetCreateOptions) error {
+	if opts.AssetName == "" {
+		return errors.New("asset name cannot be empty")
+	}
+	if opts.Width <= 0 {
+		return errors.New("width must be greater than 0")
+	}
+	if opts.Height <= 0 {
+		return errors.New("height must be greater than 0")
+	}
+	if opts.OutputPath == "" {
+		return errors.New("output path cannot be empty")
+	}
+	return nil
 }
 
 func showSummary(opts *AssetCreateOptions) {

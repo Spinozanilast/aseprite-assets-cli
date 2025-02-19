@@ -6,10 +6,11 @@ import (
 	"strings"
 )
 
-const AsepriteScriptParamArg = "-script-param"
+const AsepriteScriptParamArg = "--script-param"
 
 type AsepriteCommand interface {
 	GetArgs() []string
+	GetScriptName() string
 }
 
 func createArgsFromStruct(s interface{}) []string {
@@ -21,10 +22,11 @@ func createArgsFromStruct(s interface{}) []string {
 		field := v.Field(i)
 		fieldType := t.Field(i)
 
-		if fieldType.Tag.Get("aseprite") == "ignore" {
+		if fieldType.Tag.Get("script") == "ignore" {
 			continue
 		}
 		if fieldType.Name == "Ui" {
+			// Ui flag might be a standalone flag.
 			args = append(args, "-b")
 			continue
 		}
@@ -38,12 +40,12 @@ func createArgsFromStruct(s interface{}) []string {
 
 		value := field.Interface()
 
-		args = append(args, CreateScriptArg(key, value))
+		args = append(args, CreateScriptArgs(key, value)...)
 	}
 
 	return args
 }
 
-func CreateScriptArg(key string, value interface{}) string {
-	return fmt.Sprintf("%s %s=%v", AsepriteScriptParamArg, key, value)
+func CreateScriptArgs(key string, value any) []string {
+	return []string{AsepriteScriptParamArg, fmt.Sprintf("%s=%v", key, value)}
 }

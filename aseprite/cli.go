@@ -1,18 +1,22 @@
 package aseprite
 
 import (
-	"bytes"
 	"fmt"
 	"os/exec"
+	"path/filepath"
 )
 
+const AsepriteFilesExtension = ".aseprite"
+
 type AsepriteCLI struct {
-	AsepritePath string
+	AsepritePath   string
+	ScriptsDirPath string
 }
 
-func NewAsepriteCLI(asepritePath string) *AsepriteCLI {
+func NewAsepriteCLI(asepritePath string, scriptsDirPath string) *AsepriteCLI {
 	return &AsepriteCLI{
-		AsepritePath: asepritePath,
+		AsepritePath:   asepritePath,
+		ScriptsDirPath: scriptsDirPath,
 	}
 }
 
@@ -22,26 +26,25 @@ func (a *AsepriteCLI) CheckPrerequisites() error {
 	return err
 }
 
-func (a *AsepriteCLI) Execute(args []string) (string, error) {
+func (a *AsepriteCLI) Execute(scriptName string, args []string) (string, error) {
+	scriptPath := filepath.Join(a.ScriptsDirPath, scriptName)
+	args = append(args, "--script", scriptPath)
+
+	fmt.Printf("%s %v\n", a.AsepritePath, args)
 	cmd := exec.Command(a.AsepritePath, args...)
 
-	var stdout, stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-
-	err := cmd.Run()
-
+	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return "", fmt.Errorf("error executing aseprite command: %v\n%s", err, stderr.String())
+		return "", fmt.Errorf("error executing aseprite command: %v\n%s", err, output)
 	}
-
-	return stdout.String(), nil
+	return string(output), nil
 }
 
-func (a *AsepriteCLI) CreateAsset(command AsepriteAssetCreateCommand) error {
+func (a *AsepriteCLI) ExecuteCommand(command AsepriteCommand) error {
 	args := command.GetArgs()
 
-	_, err := a.Execute(args)
+	_, err := a.Execute(command.GetScriptName(), args)
+
 	if err != nil {
 		return err
 	}

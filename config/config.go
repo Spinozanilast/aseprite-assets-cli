@@ -12,12 +12,14 @@ const (
 	configName       = ".aseprite-assets-cli"
 	configType       = "json"
 	AsepritePathName = "aseprite_path"
+	ScriptDirPath    = "scripts_dir"
 	AssetsDirsName   = "assets_folder_paths"
 )
 
 type Config struct {
 	AsepritePath      string   `mapstructure:"aseprite_path"`
 	AssetsFolderPaths []string `mapstructure:"assets_folder_paths"`
+	ScriptDirPath     string   `mapstructure:"scripts_dir"`
 }
 
 func LoadConfig() (*Config, error) {
@@ -38,7 +40,7 @@ func ConfigInfo() {
 	fmt.Printf("All settings: %+v\n", viper.AllSettings())
 }
 
-func SaveConfig(appPath string, assetsDirs []string) error {
+func SavePaths(appPath string, assetsDirs []string) error {
 	viper.Set(AsepritePathName, appPath)
 	viper.Set(AssetsDirsName, assetsDirs)
 
@@ -49,6 +51,12 @@ func SaveConfig(appPath string, assetsDirs []string) error {
 	}
 
 	return nil
+}
+
+func SetScriptDirPath(path string) error {
+	viper.Set(ScriptDirPath, path)
+
+	return saveConfig()
 }
 
 func initConfig() error {
@@ -64,8 +72,14 @@ func initConfig() error {
 	viper.AutomaticEnv()
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
+	pwd, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+
 	viper.SetDefault(AsepritePathName, "")
 	viper.SetDefault(AssetsDirsName, []string{})
+	viper.SetDefault(ScriptDirPath, pwd+"\\scripts")
 
 	err = viper.ReadInConfig()
 	if err != nil {
@@ -83,6 +97,19 @@ func initConfig() error {
 	return nil
 }
 
+func SetDefaultScriptDirPath() {
+	pwd, err := os.Getwd()
+	if err != nil {
+		fmt.Print(err.Error())
+	}
+
+	scriptsDir := pwd + "\\scripts"
+	viper.Set(ScriptDirPath, scriptsDir)
+	fmt.Printf("Default scripts directory path set to: %s\n", scriptsDir)
+
+	saveConfig()
+}
+
 func (c *Config) Validate() error {
 	if c.AsepritePath == "" {
 		return fmt.Errorf("aseprite path is required")
@@ -91,5 +118,18 @@ func (c *Config) Validate() error {
 	if len(c.AssetsFolderPaths) == 0 {
 		return fmt.Errorf("at least one assets folder path is required")
 	}
+
+	if c.ScriptDirPath == "" {
+		return fmt.Errorf("scripts directory path is required")
+	}
+	return nil
+}
+
+func saveConfig() error {
+	err := viper.WriteConfig()
+	if err != nil {
+		return fmt.Errorf("fatal error config file: %v", err)
+	}
+
 	return nil
 }
