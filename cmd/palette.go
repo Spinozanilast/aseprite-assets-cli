@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/charmbracelet/lipgloss"
 	openai "github.com/sashabaranov/go-openai"
 	"github.com/spf13/cobra"
 	config "github.com/spinozanilast/aseprite-assets-cli/config"
@@ -44,12 +45,17 @@ var paletteCmd = &cobra.Command{
 			return err
 		}
 
-		apiKey := config.OpenAiApiKey
+		apiKey := config.OpenAiConfig.ApiKey
 		if apiKey == "" {
-			fatalError("OPENAI_API_KEY environment variable is not set")
+			fatalError("OPENAI_API_KEY environment variable is not set\nWrite `asseprite-cli config edit -k <key> -u <url> to set it`")
 		}
 
-		colors, err := generateColorsWithAi(cfg.Description, cfg.NumColors, cfg.Model, apiKey)
+		apiUrl := config.OpenAiConfig.ApiUrl
+		if apiUrl == "" {
+			fatalError("Open api url environment variable is not set\nWrite `asseprite-cli config edit -k <key> -u <url> to set it`")
+		}
+
+		colors, err := generateColorsWithAi(cfg.Description, cfg.NumColors, cfg.Model, apiKey, apiUrl)
 		if err != nil {
 			fatalError("failed to generate colors: %v", err)
 		}
@@ -68,20 +74,22 @@ var paletteCmd = &cobra.Command{
 		}
 
 		fmt.Printf("Generated palette '%s' with %d colors\n", cfg.OutputFile, len(colors))
+		printColors(colors, 5) // Example: 5 colors per row
 		return nil
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(paletteCmd)
-	paletteCmd.Flags().StringVarP(&cfg.Description, "descriptin", "d", "", "Color palette description (e.g. 'love, robots, batman')")
+	paletteCmd.Flags().StringVarP(&cfg.Description, "description", "d", "", "Color palette description (e.g. 'love, robots, batman')")
 	paletteCmd.Flags().IntVarP(&cfg.NumColors, "num-colors", "n", 5, "Number of colors to generate")
 	paletteCmd.Flags().StringVarP(&cfg.Model, "model", "m", "gpt-3.5-turbo", "AI model to use")
 	paletteCmd.Flags().StringVarP(&cfg.OutputFile, "output", "o", "ai-palette.gpl", "Output file path")
 }
 
-func generateColorsWithAi(description string, numColors int, model string, apiKey string) ([]Color, error) {
+func generateColorsWithAi(description string, numColors int, model string, apiKey string, apiUrl string) ([]Color, error) {
 	config := openai.DefaultConfig(apiKey)
+	config.BaseURL = apiUrl
 	client := openai.NewClientWithConfig(config)
 
 	prompt := fmt.Sprintf(`Generate a color palette with %d colors for: "%s". 
@@ -169,4 +177,18 @@ func generateGPL(palette Palette, path string) error {
 	}
 
 	return os.WriteFile(path, buf.Bytes(), 0644)
+}
+
+func printColors(colors []Color, colorsPerRow int) {
+	for i, color := range colors {
+		hex := fmt.Sprintf("#%02x%02x%02x", color.R, color.G, color.B)
+		style := lipgloss.NewStyle().Background(lipgloss.Color(hex)).Foreground(lipgloss.Color("#000000")).Padding(0, 1)
+		fmt.Print(style.Render(hex))
+		if (i+1)%colorsPerRow == 0 {
+			fmt.Println()
+		}
+	}
+	if len(colors)%colorsPerRow != 0 {
+		fmt.Println()
+	}
 }

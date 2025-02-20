@@ -42,9 +42,18 @@ func runConfigCmd(cmd *cobra.Command, args []string) error {
 }
 
 func handleEditConfig(cmd *cobra.Command) error {
-	err := handleFlagsDetermining(cmd)
-	if err != nil {
-		return fmt.Errorf("error on flags determining: %w", err)
+	scriptsDir, _ := cmd.Flags().GetString("scripts-dir")
+	openAiApiKey, _ := cmd.Flags().GetString("openai-key")
+	openAiApiUrl, _ := cmd.Flags().GetString("openai-url")
+
+	if scriptsDir != "" {
+		if err := setScriptsDir(scriptsDir); err != nil {
+			return err
+		}
+	}
+
+	if openAiApiKey != "" || openAiApiUrl != "" {
+		config.SetOpenAiConfig(openAiApiKey, openAiApiUrl)
 	}
 
 	cfg, err := config.LoadConfig()
@@ -52,27 +61,6 @@ func handleEditConfig(cmd *cobra.Command) error {
 		return err
 	}
 	StartConfigInitializationTui(cfg)
-	return nil
-}
-
-func handleFlagsDetermining(cmd *cobra.Command) error {
-	scriptsDir, err := cmd.Flags().GetString("scripts-dir")
-	if err != nil {
-		return fmt.Errorf("error on scripts-dir flag: %w", err)
-	}
-	openAiApiKey, err := cmd.Flags().GetString("openai-key")
-	if err != nil {
-		return fmt.Errorf("error on api-key flag: %w", err)
-	}
-
-	if scriptsDir != "" {
-		setScriptsDir(scriptsDir)
-	}
-
-	if openAiApiKey != "" {
-		config.SetOpenAiApiKey(openAiApiKey)
-	}
-
 	return nil
 }
 
@@ -87,22 +75,14 @@ func setScriptsDir(scriptsDir string) error {
 		return fmt.Errorf("scripts directory path is not a directory")
 	}
 
-	if err := config.SetScriptDirPath(scriptsDir); err != nil {
-		return fmt.Errorf("failed to set scripts directory path: %w", err)
-	}
-	return nil
+	return config.SetScriptDirPath(scriptsDir)
 }
 
 func handleOpenConfig(cmd *cobra.Command) error {
-	appPath, err := cmd.Flags().GetString("app-path")
-	if err != nil {
-		return err
-	}
-
+	appPath, _ := cmd.Flags().GetString("app-path")
 	configFile := viper.ConfigFileUsed()
+
 	if appPath != "" {
-		fmt.Println(configFile)
-		fmt.Println(appPath)
 		return utils.OpenFileWith(configFile, appPath)
 	}
 	return utils.OpenFile(configFile)
@@ -112,7 +92,8 @@ func init() {
 	rootCmd.AddCommand(configCmd)
 	configCmd.Flags().StringP("app-path", "a", "", "App path for opening config file")
 	configCmd.Flags().StringP("scripts-dir", "s", "", "Scripts directory for opening config file")
-	configCmd.Flags().StringP("openai-key", "o", "", "Openai api key for generating palettes")
+	configCmd.Flags().StringP("openai-key", "k", "", "OpenAI API key for generating palettes")
+	configCmd.Flags().StringP("openai-url", "u", "", "OpenAI API URL for generating palettes")
 }
 
 func StartConfigInitializationTui(cfg *config.Config) {
