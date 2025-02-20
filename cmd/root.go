@@ -38,3 +38,8 @@ func Execute() {
 		os.Exit(1)
 	}
 }
+
+func fatalError(format string, args ...interface{}) {
+	fmt.Fprintf(os.Stderr, format+"\n", args...)
+	os.Exit(1)
+}

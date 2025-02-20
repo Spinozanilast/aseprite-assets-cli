@@ -67,7 +67,7 @@ Available arguments:
 			}
 		}
 
-		if err := validateCreateOptions(opts); err != nil {
+		if err := opts.validateOptions(); err != nil {
 			return err
 		}
 
@@ -89,7 +89,7 @@ Available arguments:
 			return err
 		}
 
-		showSummary(opts)
+		opts.showSummary()
 
 		return nil
 	},
@@ -97,12 +97,12 @@ Available arguments:
 
 func init() {
 	rootCmd.AddCommand(createCmd)
-	createCmd.Flags().StringVarP(&assetName, "name", "n", "", "name of the asset")
-	createCmd.Flags().BoolVarP(&ui, "ui", "u", false, "open aseprite after asset creation")
-	createCmd.Flags().IntVarP(&width, "width", "w", 32, "width of the asset")
-	createCmd.Flags().IntVar(&height, "height", 32, "height of the asset") // Changed shorthand to 't'
-	createCmd.Flags().StringVarP(&colorMode, "mode", "m", "rgb", "color mode of the asset (indexed, rgb, gray, tilemap)")
-	createCmd.Flags().StringVarP(&outputPath, "path", "p", "", "output path for the asset")
+	createCmd.Flags().StringVarP(&assetName, "name", "n", "", "Name of the asset")
+	createCmd.Flags().BoolVarP(&ui, "ui", "u", false, "Open aseprite after asset creation")
+	createCmd.Flags().IntVarP(&width, "width", "w", 32, "Width of the asset")
+	createCmd.Flags().IntVar(&height, "height", 32, "Height of the asset") // Changed shorthand to 't'
+	createCmd.Flags().StringVarP(&colorMode, "mode", "m", "rgb", "Color mode of the asset (indexed, rgb, gray, tilemap)")
+	createCmd.Flags().StringVarP(&outputPath, "path", "p", "", "Output path for the asset")
 }
 
 func createAssetQuestions(dirs []string) []*survey.Question {
@@ -183,7 +183,7 @@ func collectCreateOptions(saveDirs []string) (*AssetCreateOptions, error) {
 	return opts, nil
 }
 
-func validateCreateOptions(opts *AssetCreateOptions) error {
+func (opts *AssetCreateOptions) validateOptions() error {
 	if opts.AssetName == "" {
 		return errors.New("asset name cannot be empty")
 	}
@@ -199,7 +199,7 @@ func validateCreateOptions(opts *AssetCreateOptions) error {
 	return nil
 }
 
-func showSummary(opts *AssetCreateOptions) {
+func (opts *AssetCreateOptions) showSummary() {
 	fmt.Printf("\nAsset configuration summary:\n")
 	fmt.Printf("Name: %v\n", opts.AssetName)
 	fmt.Printf("UI: %v\n", opts.Ui)

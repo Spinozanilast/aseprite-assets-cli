@@ -14,12 +14,14 @@ const (
 	AsepritePathName = "aseprite_path"
 	ScriptDirPath    = "scripts_dir"
 	AssetsDirsName   = "assets_folder_paths"
+	OpenApiKeyName   = "openai_api_key"
 )
 
 type Config struct {
 	AsepritePath      string   `mapstructure:"aseprite_path"`
 	AssetsFolderPaths []string `mapstructure:"assets_folder_paths"`
 	ScriptDirPath     string   `mapstructure:"scripts_dir"`
+	OpenAiApiKey      string   `mapstructure:"openai_api_key"`
 }
 
 func LoadConfig() (*Config, error) {
@@ -78,6 +80,7 @@ func initConfig() error {
 	}
 
 	viper.SetDefault(AsepritePathName, "")
+	viper.SetDefault(OpenApiKeyName, "")
 	viper.SetDefault(AssetsDirsName, []string{})
 	viper.SetDefault(ScriptDirPath, pwd+"\\scripts")
 
@@ -110,6 +113,20 @@ func SetDefaultScriptDirPath() {
 	saveConfig()
 }
 
+func SetOpenAiApiKey(key string) {
+	viper.Set(OpenApiKeyName, key)
+	saveConfig()
+}
+
+func saveConfig() error {
+	err := viper.WriteConfig()
+	if err != nil {
+		return fmt.Errorf("fatal error config file: %v", err)
+	}
+
+	return nil
+}
+
 func (c *Config) Validate() error {
 	if c.AsepritePath == "" {
 		return fmt.Errorf("aseprite path is required")
@@ -122,14 +139,5 @@ func (c *Config) Validate() error {
 	if c.ScriptDirPath == "" {
 		return fmt.Errorf("scripts directory path is required")
 	}
-	return nil
-}
-
-func saveConfig() error {
-	err := viper.WriteConfig()
-	if err != nil {
-		return fmt.Errorf("fatal error config file: %v", err)
-	}
-
 	return nil
 }
