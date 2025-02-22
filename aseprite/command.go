@@ -13,7 +13,7 @@ type AsepriteCommand interface {
 	GetScriptName() string
 }
 
-func createArgsFromStruct(s interface{}) []string {
+func CreateArgsFromStruct(s interface{}) []string {
 	args := []string{}
 	v := reflect.ValueOf(s).Elem()
 	t := v.Type()
@@ -26,8 +26,10 @@ func createArgsFromStruct(s interface{}) []string {
 			continue
 		}
 		if fieldType.Name == "Ui" {
-			// Ui flag might be a standalone flag.
-			args = append(args, "-b")
+			isUiEnabled := field.Interface()
+			if !(isUiEnabled).(bool) {
+				args = append(args, "-b")
+			}
 			continue
 		}
 
@@ -40,12 +42,12 @@ func createArgsFromStruct(s interface{}) []string {
 
 		value := field.Interface()
 
-		args = append(args, CreateScriptArgs(key, value)...)
+		args = append(args, createScriptArgs(key, value)...)
 	}
 
 	return args
 }
 
-func CreateScriptArgs(key string, value any) []string {
+func createScriptArgs(key string, value any) []string {
 	return []string{AsepriteScriptParamArg, fmt.Sprintf("%s=%v", key, value)}
 }

@@ -13,7 +13,7 @@ type AsepriteCLI struct {
 	ScriptsDirPath string
 }
 
-func NewAsepriteCLI(asepritePath string, scriptsDirPath string) *AsepriteCLI {
+func NewCLI(asepritePath string, scriptsDirPath string) *AsepriteCLI {
 	return &AsepriteCLI{
 		AsepritePath:   asepritePath,
 		ScriptsDirPath: scriptsDirPath,

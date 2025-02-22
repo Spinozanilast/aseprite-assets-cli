@@ -23,16 +23,18 @@ func (m model) View() string {
 	) + "\n\n")
 
 	// Input fields
-	inputs := []string{
-		m.renderInputField(&m.appPathFld, "Application Path", 0),
-	}
-
-	for i := range m.assetsDirsFlds {
-		inputs = append(inputs, m.renderInputField(
-			&m.assetsDirsFlds[i],
-			fmt.Sprintf("Assets Directory #%d", i+1),
-			i+1,
-		))
+	var inputs []string
+	assetsFldIdx, paletteFolderFldIdx := 1, 1
+	for i, field := range m.fields {
+		label := field.description
+		if field.fldType == AssetsFolderPathFld {
+			label = fmt.Sprintf("Assets Directory #%d", assetsFldIdx)
+			assetsFldIdx++
+		} else if field.fldType == PalettesFolderPathFld {
+			label = fmt.Sprintf("Palettes Directory #%d", paletteFolderFldIdx)
+			paletteFolderFldIdx++
+		}
+		inputs = append(inputs, m.renderInputField(field, label, i))
 	}
 
 	inputContainer := lipgloss.NewStyle().
@@ -43,7 +45,7 @@ func (m model) View() string {
 		lipgloss.JoinVertical(lipgloss.Left, inputs...),
 	))
 
-	//Error section
+	// Error section
 	if len(m.err) > 0 {
 		mainContent.WriteString(m.styles.ErrorLabel.Render("Error: ") + m.styles.Error.Render(m.err) + "\n")
 	}
@@ -56,12 +58,7 @@ func (m model) View() string {
 }
 
 func (m model) renderInputField(field *inputField, label string, idx int) string {
-	var isActive bool
-	if idx == 0 && m.activeInputIdx == 0 {
-		isActive = true
-	} else {
-		isActive = idx == m.activeInputIdx
-	}
+	isActive := idx == m.activeFieldIndex
 	var style lipgloss.Style
 
 	if isActive {

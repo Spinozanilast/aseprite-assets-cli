@@ -2,6 +2,7 @@ package util
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -94,6 +95,11 @@ func EnsureFileExtension(filename, extension string) string {
 	}
 
 	return filename + extension
+}
+
+func СheckFileExists(path string, watchDir bool) bool {
+	info, err := os.Stat(path)
+	return err == nil && info.IsDir() == watchDir
 }
 
 func prefExtension(extension string) string {

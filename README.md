@@ -81,5 +81,3 @@ aseprite-assets create --name "new_asset" --width 64 --height 64 --mode "rgb" --
   - Add support for palletes importing (maybe)
 - Add more documentation
 - Add deployment to winget and brew
-
-
