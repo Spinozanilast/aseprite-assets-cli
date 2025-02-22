@@ -25,6 +25,7 @@ func CreateArgsFromStruct(s interface{}) []string {
 		if fieldType.Tag.Get("script") == "ignore" {
 			continue
 		}
+
 		if fieldType.Name == "Ui" {
 			isUiEnabled := field.Interface()
 			if !(isUiEnabled).(bool) {
@@ -41,6 +42,10 @@ func CreateArgsFromStruct(s interface{}) []string {
 		}
 
 		value := field.Interface()
+
+		if fieldType.Tag.Get("format") == "quotes" {
+			value = fmt.Sprintf("\"%v\"", value)
+		}
 
 		args = append(args, createScriptArgs(key, value)...)
 	}

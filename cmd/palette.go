@@ -96,7 +96,7 @@ func runPaletteCommand(cmd *cobra.Command, args []string) error {
 		},
 	}
 
-	return handler.generatePalette(cmd, args)
+	return handler.generatePalette()
 }
 
 type generationParams struct {
@@ -115,14 +115,14 @@ func (opts *PaletteOptions) toGenerationParams() generationParams {
 	}
 }
 
-func (h *paletteHandler) generatePalette(cmd *cobra.Command, args []string) error {
+func (h *paletteHandler) generatePalette() error {
 	paletteOpts, err := h.collectPaletteOptions()
 
 	if err != nil {
 		return err
 	}
 
-	fmt.Println("⚡ Generating colors, please wait...")
+	util.PrintlnBold("\n⚡ Generating colors, please wait...")
 
 	colors, err := h.generateColors(paletteOpts.toGenerationParams())
 	if err != nil {
@@ -133,10 +133,10 @@ func (h *paletteHandler) generatePalette(cmd *cobra.Command, args []string) erro
 
 	outputOpts := &PaletteOutputOptions{}
 
-	confirm := collectConfirmPaletteOptions(outputOpts)
+	paletteConfirmed := collectConfirmPaletteOptions(outputOpts)
 
-	if !confirm {
-		fmt.Println("Palette generation is not confirmed, exiting...")
+	if !paletteConfirmed {
+		fmt.Println("⚠️ Palette generation is not confirmed, exiting...")
 		return nil
 	}
 
@@ -233,13 +233,14 @@ func (h *paletteHandler) collectSaveOptions(opts *PaletteOutputOptions, transpar
 	selectedSaveVariant := opts.PaletteSaveVariant
 
 	var questions []*survey.Question
-	if selectedSaveVariant == SaveFile || selectedSaveVariant == Both {
+	if selectedSaveVariant != SaveAsPreset {
+
 		outputDirQuestion := &survey.Question{
 			Name: "directory",
 			Prompt: &survey.Input{
 				Message: "Directory to save palettes to:",
 				Default: "palettes",
-				Suggest: func(toComplete string) []string {
+				Suggest: func(_ string) []string {
 					return h.config.PalettesFolderPaths
 				},
 			},
@@ -251,33 +252,31 @@ func (h *paletteHandler) collectSaveOptions(opts *PaletteOutputOptions, transpar
 				return nil
 			},
 		}
-		questions = append(questions, outputDirQuestion)
 
-		if selectedSaveVariant == SaveFile {
-			outputNameQuestion := &survey.Question{
-				Name: "name",
-				Prompt: &survey.Input{
-					Message: "Palette name:",
-					Default: "palette",
-				},
-				Validate: func(val interface{}) error {
-					name := val.(string)
-					dir := opts.Directory
-					if dir == "" {
-						dir = "palettes"
-					}
-					path := fmt.Sprintf("%s/%s", dir, name)
-					if _, err := os.Stat(path + PaletteTypeExtension); err == nil {
-						return errors.New("file already exists")
-					}
-					if _, err := os.Stat(path + PaletteTypePNG); err == nil {
-						return errors.New("file already exists")
-					}
-					return nil
-				},
-			}
-			questions = append(questions, outputNameQuestion)
+		outputNameQuestion := &survey.Question{
+			Name: "name",
+			Prompt: &survey.Input{
+				Message: "Palette name:",
+				Default: "palette",
+			},
+			Validate: func(val interface{}) error {
+				name := val.(string)
+				dir := opts.Directory
+				if dir == "" {
+					dir = "palettes"
+				}
+				path := fmt.Sprintf("%s/%s", dir, name)
+				if _, err := os.Stat(path + PaletteTypeExtension); err == nil {
+					return errors.New("file already exists")
+				}
+				if _, err := os.Stat(path + PaletteTypePNG); err == nil {
+					return errors.New("file already exists")
+				}
+				return nil
+			},
 		}
+
+		questions = append(questions, outputDirQuestion, outputNameQuestion)
 	}
 
 	if transparencyEnabled {
@@ -316,17 +315,19 @@ func collectConfirmPaletteOptions(opts *PaletteOutputOptions) (confirm bool) {
 			Default: SaveFile.String(),
 		}
 
-		survey.AskOne(saveVariantPrompt, &opts.PaletteSaveVariant)
+		var selectedVariantS string
+		survey.AskOne(saveVariantPrompt, &selectedVariantS)
+		selectedVariant := SaveVariantFromString(selectedVariantS)
 
-		selectedVariant := opts.PaletteSaveVariant
-
-		if selectedVariant == SaveAsPreset || selectedVariant == Both {
+		if selectedVariant != SaveFile {
 			prompt := &survey.Input{
 				Message: "Palette preset name:",
 				Default: opts.PaletteName,
 			}
 			survey.AskOne(prompt, &opts.PresetName)
 		}
+
+		opts.PaletteSaveVariant = selectedVariant
 	}
 
 	return confirm
@@ -351,7 +352,7 @@ func (h *paletteHandler) savePalette(outputOpts *PaletteOutputOptions, paletteOp
 		}
 	}
 
-	fmt.Printf("Generated palette was saved to %s\n", outputPath)
+	util.PrintFormatted("Generated palette was saved to %s\n", outputPath)
 
 	if outputOpts.PaletteSaveVariant != SaveFile {
 		asepriteCli := aseprite.NewCLI(h.config.AsepritePath, h.config.ScriptDirPath)
@@ -419,7 +420,7 @@ func (h *paletteHandler) generateColors(params generationParams) ([]Color, error
 	response := resp.Choices[0].Message.Content
 
 	logOpenAIResponse(response)
-	return parseAIResponse(response)
+	return parseResponse(response)
 }
 
 func logOpenAIResponse(response string) {
@@ -428,6 +429,7 @@ func logOpenAIResponse(response string) {
 		fmt.Printf("Error opening log file: %v\n", err)
 		return
 	}
+
 	defer logFile.Close()
 
 	logEntry := fmt.Sprintf("Timestamp: %s\nResponse: %s\n\n", time.Now().Format(time.RFC3339), response)
@@ -436,7 +438,7 @@ func logOpenAIResponse(response string) {
 	}
 }
 
-func parseAIResponse(response string) ([]Color, error) {
+func parseResponse(response string) ([]Color, error) {
 	var colors []Color
 	response = strings.ReplaceAll(response, " ", "")
 	colorStrings := strings.Split(response, ",")
@@ -487,7 +489,7 @@ func parseHexColor(hex string) (Color, error) {
 		_, err := fmt.Sscanf(hex, "%02x%02x%02x%02x", &r, &g, &b, &a)
 		return Color{r, g, b, a}, err
 	default:
-		return Color{}, fmt.Errorf("invalid hex color length")
+		return Color{}, errors.New("invalid hex color length")
 	}
 }
 
@@ -516,6 +518,7 @@ func generatePNG(palette Palette, path string) error {
 	}
 
 	file, err := os.Create(path)
+
 	if err != nil {
 		return fmt.Errorf("failed to create PNG file: %w", err)
 	}
@@ -528,22 +531,25 @@ func generatePNG(palette Palette, path string) error {
 	return nil
 }
 
-func presentResults(colors []Color, colorsPerRow int) {
+func presentResults(colors []Color, colorsPerRow int) error {
+	if len(colors) == 0 {
+		return errors.New("no colors generated")
+	}
+
 	fmt.Printf("✅ Generated palette with %d colors\n", len(colors))
 
 	for i, color := range colors {
 		hex := fmt.Sprintf("#%02x%02x%02x", color.R, color.G, color.B)
 		style := lipgloss.NewStyle().Background(lipgloss.Color(hex)).Foreground(lipgloss.Color("#000000")).Padding(0, 1)
 		fmt.Print(style.Render(hex))
+
 		if (i+1)%colorsPerRow == 0 {
 			fmt.Println()
 		}
 	}
-	if len(colors)%colorsPerRow != 0 {
-		fmt.Println()
-	}
 
 	fmt.Println()
+	return nil
 }
 
 func (s PaletteSaveVariant) String() string {
@@ -556,6 +562,19 @@ func (s PaletteSaveVariant) String() string {
 		return "Save as preset and save palette file"
 	default:
 		return "Unknown"
+	}
+}
+
+func SaveVariantFromString(variant string) PaletteSaveVariant {
+	switch variant {
+	case SaveAsPreset.String():
+		return SaveAsPreset
+	case SaveFile.String():
+		return SaveFile
+	case Both.String():
+		return Both
+	default:
+		return SaveAsPreset
 	}
 }
 

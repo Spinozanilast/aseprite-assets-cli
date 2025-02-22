@@ -9,6 +9,7 @@ import (
 	"github.com/spinozanilast/aseprite-assets-cli/aseprite"
 	"github.com/spinozanilast/aseprite-assets-cli/aseprite/commands"
 	config "github.com/spinozanilast/aseprite-assets-cli/config"
+	"github.com/spinozanilast/aseprite-assets-cli/util"
 )
 
 type AssetCreateOptions struct {
@@ -18,6 +19,10 @@ type AssetCreateOptions struct {
 	Height     int
 	ColorMode  string `survey:"mode"`
 	OutputPath string `survey:"path"`
+}
+
+type assetHandler struct {
+	config *config.Config
 }
 
 var createCmd = &cobra.Command{
@@ -30,31 +35,18 @@ var createCmd = &cobra.Command{
 			return err
 		}
 
-		asepritePath := config.AsepritePath
-		opts, err := collectCreateOptions(config.AssetsFolderPaths)
-		if err != nil {
-			return err
+		h := &assetHandler{
+			config: config,
 		}
 
-		asepriteCli := aseprite.NewCLI(asepritePath, config.ScriptDirPath)
-		err = asepriteCli.CheckPrerequisites()
+		opts, err := h.collectCreateOptions()
 		if err != nil {
-			return err
+			fatalError("failed to collect create options: %w", err)
 		}
 
-		err = asepriteCli.ExecuteCommand(&commands.AssetCreateCommand{
-			Ui:         opts.Ui,
-			Width:      opts.Width,
-			Height:     opts.Height,
-			ColorMode:  opts.ColorMode,
-			OutputPath: opts.OutputPath + "\\" + strings.TrimSpace(opts.AssetName) + ".aseprite",
-		})
-
-		if err != nil {
+		if err := h.createAsset(opts); err != nil {
 			return err
 		}
-
-		showSummary(opts)
 
 		return nil
 	},
@@ -62,6 +54,30 @@ var createCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(createCmd)
+}
+
+func (h *assetHandler) createAsset(opts *AssetCreateOptions) error {
+	asepriteCli := aseprite.NewCLI(h.config.AsepritePath, h.config.ScriptDirPath)
+	err := asepriteCli.CheckPrerequisites()
+	if err != nil {
+		return err
+	}
+
+	err = asepriteCli.ExecuteCommand(&commands.AssetCreateCommand{
+		Ui:         opts.Ui,
+		Width:      opts.Width,
+		Height:     opts.Height,
+		ColorMode:  opts.ColorMode,
+		OutputPath: opts.OutputPath + "\\" + strings.TrimSpace(opts.AssetName) + ".aseprite",
+	})
+
+	if err != nil {
+		return err
+	}
+
+	showSummary(opts)
+
+	return nil
 }
 
 func createAssetQuestions(dirs []string) []*survey.Question {
@@ -114,9 +130,9 @@ func createAssetQuestions(dirs []string) []*survey.Question {
 	return questions
 }
 
-func collectCreateOptions(saveDirs []string) (*AssetCreateOptions, error) {
+func (h *assetHandler) collectCreateOptions() (*AssetCreateOptions, error) {
 	opts := &AssetCreateOptions{}
-	err := survey.Ask(createAssetQuestions(saveDirs), opts)
+	err := survey.Ask(createAssetQuestions(h.config.AssetsFolderPaths), opts)
 
 	if err != nil {
 		return nil, err
@@ -126,12 +142,12 @@ func collectCreateOptions(saveDirs []string) (*AssetCreateOptions, error) {
 }
 
 func showSummary(opts *AssetCreateOptions) {
-	fmt.Printf("Asset configuration summary:\n")
+	util.PrintlnBold("\nAsset configuration summary:\n")
 	fmt.Printf("Name: %v\n", opts.AssetName)
 	fmt.Printf("UI: %v\n", opts.Ui)
 	fmt.Printf("Width: %v\n", opts.Width)
 	fmt.Printf("Height: %v\n", opts.Height)
 	fmt.Printf("Color mode: %v\n", opts.ColorMode)
 	fmt.Printf("Output path: %v\n", opts.OutputPath)
-	fmt.Println("✓ Asset created successfully")
+	util.PrintlnSuccess("✓ Asset created successfully")
 }

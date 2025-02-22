@@ -30,7 +30,6 @@ func (a *AsepriteCLI) Execute(scriptName string, args []string) (string, error) 
 	scriptPath := filepath.Join(a.ScriptsDirPath, scriptName)
 	args = append(args, "--script", scriptPath)
 
-	fmt.Printf("%s %v\n", a.AsepritePath, args)
 	cmd := exec.Command(a.AsepritePath, args...)
 
 	output, err := cmd.CombinedOutput()

@@ -4,7 +4,7 @@ import "github.com/spinozanilast/aseprite-assets-cli/aseprite"
 
 type SavePaletteAsPresetCommand struct {
 	Ui              bool
-	PresetName      string `script:"preset-name"`
+	PresetName      string `script:"preset-name" format:"quotes"`
 	PaletteFilename string `script:"palette-filename"`
 }
 
