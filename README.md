@@ -14,6 +14,9 @@ CLI interface for aseprite assets interaction. For in-terminal opening of asepri
 
 ## Commands Tree
 
+> [!NOTE]
+> If commands missing arg - it means that they work with surveys (interactive questions) instead of flags (watch [surveys-structure](#surveys-structure))
+
 ``` bash
 aseprite-assets
 ├── list (l)
@@ -23,14 +26,10 @@ aseprite-assets
 │   ├── edit: Edit configuration using a TUI
 │   └── open: Open configuration file
 │       └── --app-path (-a): Specify app to open the config file
-├── create (cr) [ARG]
+├── create (cr)
 │   └── Create a new aseprite asset with the specified options
-│       ├── --name (-n): The name of the asset
-│       ├── --ui (-u): Whether to open aseprite after asset creation
-│       ├── --width (-w): The width of the asset
-│       ├── --height: The height of the asset
-│       ├── --mode (-m): The color mode of the asset (indexed, rgb, gray, tilemap)
-│       └── --path (-p): The output path for the asset
+├── palette (p)
+│   └── Create a new color palette using OpenAI API (surveys used instead of flags)
 ```
 
 ## Installation
@@ -70,14 +69,47 @@ aseprite-assets config open --app-path "path/to/application"
 ### Create Asset
 To create a new aseprite asset:
 ```sh
-aseprite-assets create --name "new_asset" --width 64 --height 64 --mode "rgb" --path "path/to/save"
+aseprite-assets create
 ```
 
+### Create Palette
+To create a new color palette using OpenAI API, follow the interactive prompts:
+```sh
+aseprite-assets palette
+```
+
+## Surveys Structure
+
+### Create Asset
+The `create` command uses the following survey questions:
+1. **Asset name (without extension)**: The name of the asset.
+2. **Open aseprite after asset creation?**: Whether to open aseprite after asset creation.
+3. **Width**: The width of the asset.
+4. **Height**: The height of the asset.
+5. **Color mode**: The color mode of the asset (indexed, rgb, gray, tilemap).
+6. **Output path**: The output path for the asset.
+
+### Create Palette
+The `palette` command uses the following survey questions:
+1. **Color palette description**: Description of the palette (e.g. 'love, robots, batman').
+2. **Number of colors to generate**: Number of colors to generate (if 0 - generate all colors).
+3. **AI model to use**: AI model to use. 
+>  Now available: `GPT3Dot5Turbo`, `GPT4oMini`, `GPT4o`, `O1Mini`, `GPT4Turbo`, `GPT4`,
+4. **Enable advanced mode?**: Enable advanced mode.
+5. **Include transparency?**: Include transparency in the colors (only asked if advanced mode is enabled).
+6. **Directory to save palettes to**: Directory to save the palette.
+7. **Palette name**: Name of the palette.
+8. **Select file type**: File type of the palette (gpl, png).
+9.  **Select save variant**: Save variant (Save as preset, Save as file, Both).
+
 ## TO DO
-- Add more features
-  - Add support for opening multiple files at once *(currently only one file can be opened at a time)*
-  - Add support for assets management (removing, creating, renaming, copying)
-  - Add integration with aseprite cli for better and easier (with less steps and tui) interaction
-  - Add support for palletes importing (maybe)
-- Add more documentation
-- Add deployment to winget and brew
+- [ ] Add features 
+  - [x] Add palette creating with OpenAI API
+  - [x] Add assets creation
+  - [x] Add assets listing with open possibility
+  - [ ] Add support for opening multiple files at once *(currently only one file can be opened at a time)*
+  - [ ] Add support for assets management (removing, creating, renaming, copying)
+  - [x] ~ Add integration with aseprite cli for better and easier (with less steps and tui) interaction
+  - [ ] Add support for palletes importing (maybe)
+- [ ] Add more documentation
+- [ ] Add deployment to winget and brew
