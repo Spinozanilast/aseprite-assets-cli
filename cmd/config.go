@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"os"
 
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/spinozanilast/aseprite-assets-cli/utils"
+
+	tea "github.com/charmbracelet/bubbletea"
 	config "github.com/spinozanilast/aseprite-assets-cli/config"
 	configTui "github.com/spinozanilast/aseprite-assets-cli/tui/config"
-	utils "github.com/spinozanilast/aseprite-assets-cli/util"
 )
 
 var configCmd = &cobra.Command{
@@ -44,7 +45,11 @@ var configCmd = &cobra.Command{
 			if err != nil {
 				return err
 			}
-			StartConfigInitializationTui(config)
+
+			if config.ScriptDirPath == "" {
+				StartConfigInitializationTui(config)
+			}
+
 		case "open":
 			appPath, err := cmd.Flags().GetString("app-path")
 			if err == nil && appPath != "" {

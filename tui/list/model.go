@@ -3,14 +3,15 @@ package assets
 import (
 	"fmt"
 	"io"
+	"path/filepath"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
+	"github.com/spinozanilast/aseprite-assets-cli/utils"
+
 	tea "github.com/charmbracelet/bubbletea"
-	utils "github.com/spinozanilast/aseprite-assets-cli/util"
-	types "github.com/spinozanilast/aseprite-assets-cli/util/types"
 )
 
 type Direction int
@@ -47,15 +48,36 @@ func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list
 	fmt.Fprint(w, fn(str))
 }
 
+type AssetsSource struct {
+	folderPath  string
+	assetsNames []string
+}
+
+func (a *AssetsSource) GetAssetsNames() []string {
+	return a.assetsNames
+}
+
+func (a *AssetsSource) GetFolderPath() string {
+	return a.folderPath
+}
+
+func NewAssetsSource(folderPath string, assetsNames []string) AssetsSource {
+	return AssetsSource{
+		folderPath:  folderPath,
+		assetsNames: assetsNames,
+	}
+}
+
 type model struct {
 	list             list.Model
 	appPath          string
-	assetsFolders    []types.AssetsDirs
+	assetsFolders    []AssetsSource
 	assetsActive     []int
 	activeFolderIdx  int
 	activeFolderName string
 	prevFolderName   string
 	nextFolderName   string
+	title            string
 	styles           *Styles
 	keys             keyMap
 	help             help.Model
@@ -106,7 +128,7 @@ var keys = keyMap{
 	),
 }
 
-func InitialModel(appPath string, assetsFolders [](types.AssetsDirs)) model {
+func InitialModel(title string, appPath string, assetsFolders []AssetsSource) model {
 	h := help.New()
 	h.ShowAll = true
 	folderLength := len(assetsFolders)
@@ -190,7 +212,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m *model) handleEnterKey() (tea.Model, tea.Cmd) {
 	selectedItem := m.currentAssets()[m.list.Index()]
-	utils.OpenFileWith(selectedItem, m.appPath)
+	filename := filepath.Join(m.activeFolderName, selectedItem)
+	utils.OpenFileWith(filename, m.appPath)
 	return m, nil
 }
 

@@ -15,12 +15,13 @@ import (
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/charmbracelet/lipgloss"
-	openai "github.com/sashabaranov/go-openai"
 	"github.com/spf13/cobra"
 	"github.com/spinozanilast/aseprite-assets-cli/aseprite"
 	"github.com/spinozanilast/aseprite-assets-cli/aseprite/commands"
+	"github.com/spinozanilast/aseprite-assets-cli/utils"
+
+	openai "github.com/sashabaranov/go-openai"
 	config "github.com/spinozanilast/aseprite-assets-cli/config"
-	"github.com/spinozanilast/aseprite-assets-cli/util"
 )
 
 const (
@@ -122,7 +123,7 @@ func (h *paletteHandler) generatePalette() error {
 		return err
 	}
 
-	util.PrintlnBold("\n⚡ Generating colors, please wait...")
+	utils.PrintlnBold("\n⚡ Generating colors, please wait...")
 
 	colors, err := h.generateColors(paletteOpts.toGenerationParams())
 	if err != nil {
@@ -335,7 +336,7 @@ func collectConfirmPaletteOptions(opts *PaletteOutputOptions) (confirm bool) {
 
 func (h *paletteHandler) savePalette(outputOpts *PaletteOutputOptions, paletteOpts *PaletteOptions, colors []Color) {
 	outputPath := filepath.Join(outputOpts.Directory, outputOpts.PaletteName)
-	outputPath = util.EnsureFileExtension(outputPath, outputOpts.FileType)
+	outputPath = utils.EnsureFileExtension(outputPath, outputOpts.FileType)
 
 	palette := Palette{
 		Name:   fmt.Sprintf("AI Palette: %s", paletteOpts.Description),
@@ -352,7 +353,7 @@ func (h *paletteHandler) savePalette(outputOpts *PaletteOutputOptions, paletteOp
 		}
 	}
 
-	util.PrintFormatted("Generated palette was saved to %s\n", outputPath)
+	utils.PrintFormatted("Generated palette was saved to %s\n", outputPath)
 
 	if outputOpts.PaletteSaveVariant != SaveFile {
 		asepriteCli := aseprite.NewCLI(h.config.AsepritePath, h.config.ScriptDirPath)

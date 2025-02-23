@@ -29,6 +29,8 @@ archives:
       - goos: windows
         formats: ["zip"]
     files:
+      - src: scripts/**
+        dst: scripts
       - LICENSE
       - README.md
 

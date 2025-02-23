@@ -1,4 +1,4 @@
-package util
+package utils
 
 func MaxLength(strings ...string) int {
 	max := 0

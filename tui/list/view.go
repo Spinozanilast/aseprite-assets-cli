@@ -4,14 +4,14 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
-	utils "github.com/spinozanilast/aseprite-assets-cli/util"
+	"github.com/spinozanilast/aseprite-assets-cli/utils"
 )
 
 func (m model) View() string {
 	var mainContent strings.Builder
 
 	// Title section
-	title := m.styles.Title.Render("Aseprite-assets View")
+	title := m.styles.Title.Render(m.title)
 	mainContent.WriteString(lipgloss.PlaceHorizontal(
 		m.styles.App.GetWidth(),
 		lipgloss.Center,

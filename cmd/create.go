@@ -8,8 +8,9 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spinozanilast/aseprite-assets-cli/aseprite"
 	"github.com/spinozanilast/aseprite-assets-cli/aseprite/commands"
+	"github.com/spinozanilast/aseprite-assets-cli/utils"
+
 	config "github.com/spinozanilast/aseprite-assets-cli/config"
-	"github.com/spinozanilast/aseprite-assets-cli/util"
 )
 
 type AssetCreateOptions struct {
@@ -142,12 +143,12 @@ func (h *assetHandler) collectCreateOptions() (*AssetCreateOptions, error) {
 }
 
 func showSummary(opts *AssetCreateOptions) {
-	util.PrintlnBold("\nAsset configuration summary:\n")
+	utils.PrintlnBold("\nAsset configuration summary:\n")
 	fmt.Printf("Name: %v\n", opts.AssetName)
 	fmt.Printf("UI: %v\n", opts.Ui)
 	fmt.Printf("Width: %v\n", opts.Width)
 	fmt.Printf("Height: %v\n", opts.Height)
 	fmt.Printf("Color mode: %v\n", opts.ColorMode)
 	fmt.Printf("Output path: %v\n", opts.OutputPath)
-	util.PrintlnSuccess("✓ Asset created successfully")
+	utils.PrintlnSuccess("✓ Asset created successfully")
 }
