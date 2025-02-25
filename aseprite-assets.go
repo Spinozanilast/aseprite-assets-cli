@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	cmd "github.com/spinozanilast/aseprite-assets-cli/cmd"
+	"github.com/spinozanilast/aseprite-assets-cli/internal/commands"
+
 	config "github.com/spinozanilast/aseprite-assets-cli/pkg/config"
 )
 
@@ -17,9 +18,9 @@ func main() {
 
 	if err := config.Validate(); err != nil {
 		fmt.Printf("Invalid or empty config: %v\n", err)
-		cmd.StartConfigInitializationTui(config)
+		commands.StartConfigInitializationTui(config)
 		return
 	}
 
-	cmd.Execute()
+	commands.Execute()
 }

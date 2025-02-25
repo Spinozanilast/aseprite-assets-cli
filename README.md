@@ -19,7 +19,7 @@ CLI interface for aseprite assets interaction. For in-terminal opening of asepri
 
 ``` bash
 aseprite-assets
-├── list (l)
+├── list (l) [FLAG]
 │   └── List existing aseprite assets
 ├── config (cfg) [ARG]
 │   ├── info: Display configuration information
@@ -30,6 +30,8 @@ aseprite-assets
 │   └── Create a new aseprite asset with the specified options
 ├── palette (p)
 │   └── Create a new color palette using OpenAI API (surveys used instead of flags)
+├── show (sh) [ARGS] [FLAG]
+│   └── Preview aseprite sprite or palette in terminal
 ```
 
 ## Installation
@@ -76,6 +78,16 @@ aseprite-assets create
 To create a new color palette using OpenAI API, follow the interactive prompts:
 ```sh
 aseprite-assets palette
+```
+
+### Show Asset or Palette
+To preview an aseprite sprite or palette in the terminal:
+```sh
+aseprite-assets show --filename "path/to/file.aseprite"
+```
+To show a palette preview with custom colors format and palette size:
+```sh
+aseprite-assets show --filename "path/to/file.gpl" --color-format "rgb" --output-row-count 10 --palette-preview
 ```
 
 ## Surveys Structure

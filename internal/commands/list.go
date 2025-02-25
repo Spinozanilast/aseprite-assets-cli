@@ -1,4 +1,4 @@
-package cmd
+package commands
 
 import (
 	"fmt"
@@ -23,7 +23,6 @@ const (
 )
 
 type listHandler struct {
-	listTitle  string
 	config     *config.Config
 	listType   ListType
 	extensions []string

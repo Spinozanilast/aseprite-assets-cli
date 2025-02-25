@@ -81,18 +81,21 @@ func SetOpenAiConfig(apiKey string, apiUrl string) error {
 }
 
 func initConfig() error {
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return fmt.Errorf("failed to get home directory: %w", err)
+	homeDir := os.Getenv("HOME")
+	if homeDir == "" {
+		var err error
+		homeDir, err = os.UserHomeDir()
+		if err != nil {
+			return fmt.Errorf("failed to get home directory: %w", err)
+		}
 	}
 
-	viper.SetConfigName(configName)
-	viper.SetConfigType(configType)
-	viper.AddConfigPath(homeDir)
+	configFile := filepath.Join(homeDir, configName+"."+configType)
+	viper.SetConfigFile(configFile)
+
 	viper.AutomaticEnv()
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
-	// Bind environment variables for OpenAiConfig
 	viper.BindEnv(OpenAiConfigKey+".api_key", "OPENAI_API_KEY")
 	viper.BindEnv(OpenAiConfigKey+".api_url", "OPENAI_API_URL")
 
@@ -111,6 +114,10 @@ func initConfig() error {
 
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			// Ensure the directory exists before writing
+			if err := os.MkdirAll(filepath.Dir(configFile), 0755); err != nil {
+				return fmt.Errorf("failed to create config directory: %w", err)
+			}
 			if err := viper.SafeWriteConfig(); err != nil {
 				return fmt.Errorf("failed to write initial config: %w", err)
 			}

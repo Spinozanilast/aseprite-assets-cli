@@ -1,8 +1,9 @@
-package cmd
+package commands
 
 import (
 	"fmt"
 
+	"github.com/MakeNowJust/heredoc/v2"
 	"github.com/spf13/cobra"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/aseprite"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/aseprite/commands"
@@ -24,6 +25,28 @@ var showCommand = &cobra.Command{
 	Use:     "show",
 	Aliases: []string{"sh"},
 	Short:   "Previw aseprite sprite in terminal",
+	Long: `The 'show' command allows you to preview Aseprite assets directly in your terminal.
+It supports various file formats including .ase, .aseprite, and palette files.
+All supported palette formats: .ase, .aseprite, .bmp, .flc, .fli, .gif, .ico, .jpeg, .jpg, .pcc, .png, .qoi, .tga, .webp, .act, .col, .gpl, .hex, .pal,
+For sprite files (.ase, .aseprite) :
+- Displays a ansii blocks based representation of the sprite in the terminal.
+- Use the --palette-preview or -p flag to show the palette used in the sprite instead (not sprites colors). 
+For palette files:
+- Shows a color palette preview with customizable output format (rgb or hex).
+	`,
+	Example: heredoc.Doc(`
+		# Show asset preview based on file extension
+		$ aseprite-assets-cli show -f <fullpath-to-file>
+
+		# Show asset preview by filename
+		$ aseprite-assets-cli show -f <fullpath-to-file>
+
+		# Show palette preview by filename with custom colors format and palette size
+		$ aseprite-assets-cli show -f <fullpath-to-file> -c rgb -r 10 -p
+
+		# Show palette preview by filename
+		$ aseprite-assets-cli show -f <fullpath-to-file> -p
+	`),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg, err := config.LoadConfig()
 		if err != nil {
