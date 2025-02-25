@@ -30,7 +30,6 @@ archives:
         formats: ["zip"]
     files:
       - src: scripts/**
-        dst: scripts
       - LICENSE
       - README.md
 

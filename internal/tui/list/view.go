@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
-	"github.com/spinozanilast/aseprite-assets-cli/utils"
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils"
 )
 
 func (m model) View() string {

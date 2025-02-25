@@ -6,11 +6,11 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/spinozanilast/aseprite-assets-cli/utils"
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils"
 
 	tea "github.com/charmbracelet/bubbletea"
-	config "github.com/spinozanilast/aseprite-assets-cli/config"
-	configTui "github.com/spinozanilast/aseprite-assets-cli/tui/config"
+	configTui "github.com/spinozanilast/aseprite-assets-cli/internal/tui/config"
+	config "github.com/spinozanilast/aseprite-assets-cli/pkg/config"
 )
 
 var configCmd = &cobra.Command{

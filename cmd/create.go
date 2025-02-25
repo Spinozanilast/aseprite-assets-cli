@@ -2,15 +2,17 @@ package cmd
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
-	"github.com/spinozanilast/aseprite-assets-cli/aseprite"
-	"github.com/spinozanilast/aseprite-assets-cli/aseprite/commands"
-	"github.com/spinozanilast/aseprite-assets-cli/utils"
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/aseprite"
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/aseprite/commands"
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/consts"
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils"
 
-	config "github.com/spinozanilast/aseprite-assets-cli/config"
+	config "github.com/spinozanilast/aseprite-assets-cli/pkg/config"
 )
 
 type AssetCreateOptions struct {
@@ -64,12 +66,18 @@ func (h *assetHandler) createAsset(opts *AssetCreateOptions) error {
 		return err
 	}
 
-	err = asepriteCli.ExecuteCommand(&commands.AssetCreateCommand{
-		Ui:         opts.Ui,
+	filename := filepath.Join(opts.OutputPath, strings.TrimSpace(opts.AssetName)+consts.Aseprite.String())
+
+	if utils.СheckFileExists(filename, false) {
+		return fmt.Errorf("file already exists: %s", filename)
+	}
+
+	err = asepriteCli.ExecuteCommand(&commands.AssetCreate{
+		BatchMode:  !opts.Ui,
 		Width:      opts.Width,
 		Height:     opts.Height,
 		ColorMode:  opts.ColorMode,
-		OutputPath: opts.OutputPath + "\\" + strings.TrimSpace(opts.AssetName) + ".aseprite",
+		OutputPath: filename,
 	})
 
 	if err != nil {

@@ -16,17 +16,13 @@ import (
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
-	"github.com/spinozanilast/aseprite-assets-cli/aseprite"
-	"github.com/spinozanilast/aseprite-assets-cli/aseprite/commands"
-	"github.com/spinozanilast/aseprite-assets-cli/utils"
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/aseprite"
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/aseprite/commands"
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/consts"
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils"
 
 	openai "github.com/sashabaranov/go-openai"
-	config "github.com/spinozanilast/aseprite-assets-cli/config"
-)
-
-const (
-	PaletteTypeExtension = ".gpl"
-	PaletteTypePNG       = ".png"
+	config "github.com/spinozanilast/aseprite-assets-cli/pkg/config"
 )
 
 type paletteHandler struct {
@@ -267,11 +263,10 @@ func (h *paletteHandler) collectSaveOptions(opts *PaletteOutputOptions, transpar
 					dir = "palettes"
 				}
 				path := fmt.Sprintf("%s/%s", dir, name)
-				if _, err := os.Stat(path + PaletteTypeExtension); err == nil {
-					return errors.New("file already exists")
-				}
-				if _, err := os.Stat(path + PaletteTypePNG); err == nil {
-					return errors.New("file already exists")
+				for _, ext := range consts.PaletteExtensions() {
+					if _, err := os.Stat(path + ext); err == nil {
+						return errors.New("file already exists")
+					}
 				}
 				return nil
 			},
@@ -281,14 +276,14 @@ func (h *paletteHandler) collectSaveOptions(opts *PaletteOutputOptions, transpar
 	}
 
 	if transparencyEnabled {
-		opts.FileType = PaletteTypePNG
+		opts.FileType = consts.PNG.String()
 	} else {
 		fileTypeQuestion := &survey.Question{
 			Name: "file-type",
 			Prompt: &survey.Select{
 				Message: "Select file type:",
-				Options: []string{PaletteTypeExtension, PaletteTypePNG},
-				Default: PaletteTypeExtension,
+				Options: consts.PaletteExtensions(),
+				Default: consts.GPL.String(),
 			},
 		}
 		questions = append(questions, fileTypeQuestion)
@@ -343,7 +338,7 @@ func (h *paletteHandler) savePalette(outputOpts *PaletteOutputOptions, paletteOp
 		Colors: colors,
 	}
 
-	if outputOpts.FileType == PaletteTypePNG {
+	if outputOpts.FileType == consts.PNG.String() {
 		if err := generatePNG(palette, outputPath); err != nil {
 			fatalError("Error generating palette: %v", err)
 		}
@@ -357,8 +352,9 @@ func (h *paletteHandler) savePalette(outputOpts *PaletteOutputOptions, paletteOp
 
 	if outputOpts.PaletteSaveVariant != SaveFile {
 		asepriteCli := aseprite.NewCLI(h.config.AsepritePath, h.config.ScriptDirPath)
-		asepriteCli.ExecuteCommand(&commands.SavePaletteAsPresetCommand{
-			Ui:              false,
+
+		asepriteCli.ExecuteCommand(&commands.SavePalette{
+			BatchMode:       true,
 			PresetName:      outputOpts.PresetName,
 			PaletteFilename: outputPath,
 		})

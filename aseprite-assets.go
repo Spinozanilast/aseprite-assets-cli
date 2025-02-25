@@ -5,7 +5,7 @@ import (
 	"os"
 
 	cmd "github.com/spinozanilast/aseprite-assets-cli/cmd"
-	config "github.com/spinozanilast/aseprite-assets-cli/config"
+	config "github.com/spinozanilast/aseprite-assets-cli/pkg/config"
 )
 
 func main() {

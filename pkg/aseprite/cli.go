@@ -6,8 +6,6 @@ import (
 	"path/filepath"
 )
 
-const AsepriteFilesExtension = ".aseprite"
-
 type AsepriteCLI struct {
 	AsepritePath   string
 	ScriptsDirPath string
@@ -39,14 +37,26 @@ func (a *AsepriteCLI) Execute(scriptName string, args []string) (string, error) 
 	return string(output), nil
 }
 
-func (a *AsepriteCLI) ExecuteCommand(command AsepriteCommand) error {
-	args := command.GetArgs()
+func (a *AsepriteCLI) ExecuteCommand(command Command) error {
+	args := command.Args()
 
-	_, err := a.Execute(command.GetScriptName(), args)
+	_, err := a.Execute(command.ScriptName(), args)
 
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func (a *AsepriteCLI) ExecuteCommandOutput(command Command) (string, error) {
+	args := command.Args()
+
+	output, err := a.Execute(command.ScriptName(), args)
+
+	if err != nil {
+		return "", err
+	}
+
+	return output, nil
 }

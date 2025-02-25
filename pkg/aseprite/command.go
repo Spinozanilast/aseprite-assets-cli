@@ -8,9 +8,9 @@ import (
 
 const AsepriteScriptParamArg = "--script-param"
 
-type AsepriteCommand interface {
-	GetArgs() []string
-	GetScriptName() string
+type Command interface {
+	Args() []string
+	ScriptName() string
 }
 
 func CreateArgsFromStruct(s interface{}) []string {
@@ -26,9 +26,9 @@ func CreateArgsFromStruct(s interface{}) []string {
 			continue
 		}
 
-		if fieldType.Name == "Ui" {
-			isUiEnabled := field.Interface()
-			if !(isUiEnabled).(bool) {
+		if fieldType.Name == "BatchMode" {
+			isBatchModeCmd := field.Interface()
+			if (isBatchModeCmd).(bool) {
 				args = append(args, "-b")
 			}
 			continue
@@ -44,7 +44,7 @@ func CreateArgsFromStruct(s interface{}) []string {
 		value := field.Interface()
 
 		if fieldType.Tag.Get("format") == "quotes" {
-			value = fmt.Sprintf("\"%v\"", value)
+			value = fmt.Sprintf("%s", value)
 		}
 
 		args = append(args, createScriptArgs(key, value)...)

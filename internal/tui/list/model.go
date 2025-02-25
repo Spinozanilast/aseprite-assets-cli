@@ -9,7 +9,7 @@ import (
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
-	"github.com/spinozanilast/aseprite-assets-cli/utils"
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils"
 
 	tea "github.com/charmbracelet/bubbletea"
 )

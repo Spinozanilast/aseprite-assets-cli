@@ -1,4 +1,3 @@
-local ui = app.params["ui"] == "true" and true or false
 local sprite_width = tonumber(app.params["width"]) or 32
 local sprite_height = tonumber(app.params["height"]) or 32
 local color_mode = app.params["color-mode"]
@@ -23,7 +22,7 @@ color_mode = get_color_mode(color_mode)
 
 -- https://www.aseprite.org/api/command/NewFile#newfile
 app.command.NewFile {
-    ui = ui,
+    ui = false,
     width = sprite_width,
     height = sprite_height,
     colorMode = color_mode,

@@ -8,10 +8,10 @@ import (
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/textinput"
-	"github.com/spinozanilast/aseprite-assets-cli/utils"
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils"
 
 	tea "github.com/charmbracelet/bubbletea"
-	config "github.com/spinozanilast/aseprite-assets-cli/config"
+	config "github.com/spinozanilast/aseprite-assets-cli/pkg/config"
 )
 
 type FldType int

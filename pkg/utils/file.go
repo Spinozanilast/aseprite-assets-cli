@@ -131,9 +131,24 @@ func EnsureFileExtension(filename, extension string) string {
 	return filename + extension
 }
 
+func СheckFileExtension(path string, extensions ...string) bool {
+	for _, ext := range extensions {
+		ext = prefExtension(ext)
+		if filepath.Ext(path) == ext {
+			return true
+		}
+	}
+
+	return false
+}
+
 func СheckFileExists(path string, watchDir bool) bool {
 	info, err := os.Stat(path)
 	return err == nil && info.IsDir() == watchDir
+}
+
+func GetFileExtension(filename string) string {
+	return filepath.Ext(filename)
 }
 
 func prefExtension(extension string) string {
