@@ -2,9 +2,10 @@
 
 [![Release](https://github.com/Spinozanilast/aseprite-assets-cli/actions/workflows/release.yml/badge.svg)](https://github.com/Spinozanilast/aseprite-assets-cli/actions/workflows/release.yml)
 # Aseprite Assets CLI
-<p>
 
-![Aseprite Logo](https://github.com/aseprite/aseprite/blob/main/data/icons/ase128.png?raw=true) ![X](https://github.com/Spinozanilast/spinozanilast/blob/master/assets/X.png?raw=true") ![X](https://github.com/Spinozanilast/spinozanilast/blob/master/assets/spinozanilast.gif?raw=true")
+
+![logo](https://github.com/Spinozanilast/aseprite-assets-cli/blob/master/www/static/logo128.png?raw=true") 
+<p>
 
 </span>
 </div>
@@ -115,13 +116,23 @@ The `palette` command uses the following survey questions:
 9.  **Select save variant**: Save variant (Save as preset, Save as file, Both).
 
 ## TO DO
-- [ ] Add features 
-  - [x] Add palette creating with OpenAI API
-  - [x] Add assets creation
-  - [x] Add assets listing with open possibility
-  - [ ] Add support for opening multiple files at once *(currently only one file can be opened at a time)*
-  - [ ] Add support for assets management (removing, creating, renaming, copying)
+- [ ] Features 
+  - [x] Palette creating with OpenAI API
+  - [x] Assets creation
+  - [x] Assets listing with open possibility
+  - [ ] Exporting assets (multiple sizes in one time (with scale))
+  - [ ] Support for opening multiple files at once *(currently only one file can be opened at a time)*
+  - [ ] Support for assets management (removing, creating, renaming, copying)
   - [x] ~ Add integration with aseprite cli for better and easier (with less steps and tui) interaction
   - [ ] Add support for palletes importing (maybe)
-- [ ] Add more documentation
+- [ ] More documentation
 - [ ] Add deployment to winget and brew
+
+------
+<div align="center">
+
+## With love to [Aseprite](https://www.aseprite.org/)  
+
+![Aseprite Logo](https://github.com/aseprite/aseprite/blob/main/data/icons/ase128.png?raw=true) ![X](https://github.com/Spinozanilast/spinozanilast/blob/master/assets/X.png?raw=true") ![spinozanilast](https://github.com/Spinozanilast/spinozanilast/blob/master/assets/spinozanilast.gif?raw=true")
+
+</div>
