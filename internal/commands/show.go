@@ -24,16 +24,6 @@ type showCmd struct {
 var showCommand = &cobra.Command{
 	Use:     "show",
 	Aliases: []string{"sh"},
-	Short:   "Previw aseprite sprite in terminal",
-	Long: `The 'show' command allows you to preview Aseprite assets directly in your terminal.
-It supports various file formats including .ase, .aseprite, and palette files.
-All supported palette formats: .ase, .aseprite, .bmp, .flc, .fli, .gif, .ico, .jpeg, .jpg, .pcc, .png, .qoi, .tga, .webp, .act, .col, .gpl, .hex, .pal,
-For sprite files (.ase, .aseprite) :
-- Displays a ansii blocks based representation of the sprite in the terminal.
-- Use the --palette-preview or -p flag to show the palette used in the sprite instead (not sprites colors). 
-For palette files:
-- Shows a color palette preview with customizable output format (rgb or hex).
-	`,
 	Example: heredoc.Doc(`
 		# Show asset preview based on file extension
 		$ aseprite-assets-cli show -f <fullpath-to-file>
@@ -85,6 +75,28 @@ For palette files:
 }
 
 func init() {
+	desc := &CommandDescription{
+		Title: "Show asset command",
+		Short: "Preview aseprite asset in terminal",
+		Long:  "The 'show' command allows you to preview Aseprite assets directly in your terminal. It supports various file formats including .ase, .aseprite, and palette files.",
+		Sections: []Section{
+			{
+				Title: "Palettes",
+				Text: heredoc.Doc(`
+					Displays a color palette preview with customizable output format (rgb or hex).
+					All supported palette formats: .ase, .aseprite, .bmp, .flc, .fli, .gif, .ico, .jpeg, .jpg, .pcc, .png, .qoi, .tga, .webp, .act, .col, .gpl, .hex, .pal,`),
+			},
+			{
+				Title: "Sprites",
+				Text: heredoc.Doc(`
+					Displays a ansii blocks based representation of the sprite in the terminal.
+					- Use the --palette-preview or -p flag to show the palette used in the sprite instead (not sprites colors).`),
+			},
+		},
+	}
+
+	desc.ApplyToCommand(showCommand)
+
 	showCommand.Flags().StringP("filename", "f", "", "asset filename")
 	showCommand.Flags().StringP("color-format", "c", "hex", "color format of values in palette (only for palettes preview)")
 	showCommand.Flags().IntP("output-row-count", "r", 5, "number of colors in one row (only for palettes preview)")

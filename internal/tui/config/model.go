@@ -174,7 +174,6 @@ func newPalettesInputField() *inputField {
 func newInputField(placeholder string, description string, fldType FldType) *inputField {
 	textInput := textinput.New()
 	textInput.Placeholder = placeholder
-	textInput.ShowSuggestions = true
 
 	return &inputField{
 		Model:       textInput,
