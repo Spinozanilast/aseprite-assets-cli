@@ -123,8 +123,8 @@ func createAssetQuestions(dirs []string) []*survey.Question {
 			Name: "mode",
 			Prompt: &survey.Select{
 				Message: "Color mode",
-				Options: []string{"indexed", "rgb", "gray", "tilemap"},
-				Default: "rgb",
+				Options: aseprite.ColorModes(),
+				Default: aseprite.ColorModeRGB.String(),
 			},
 		},
 		{
