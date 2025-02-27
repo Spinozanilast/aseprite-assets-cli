@@ -26,6 +26,10 @@ func CreateArgsFromStruct(s interface{}) []string {
 			continue
 		}
 
+		if (fieldType.Type.Kind() == reflect.String) && (field.String() == "") {
+			continue
+		}
+
 		if fieldType.Name == "BatchMode" {
 			isBatchModeCmd := field.Interface()
 			if (isBatchModeCmd).(bool) {

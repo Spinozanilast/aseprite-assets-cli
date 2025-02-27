@@ -40,6 +40,7 @@ func (a *AsepriteCLI) Execute(scriptName string, args []string) (string, error) 
 func (a *AsepriteCLI) ExecuteCommand(command Command) error {
 	args := command.Args()
 
+	fmt.Printf("Executing command: %s %s\n", command.ScriptName(), args)
 	_, err := a.Execute(command.ScriptName(), args)
 
 	if err != nil {

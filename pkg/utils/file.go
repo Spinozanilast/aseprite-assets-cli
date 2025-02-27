@@ -50,7 +50,7 @@ func FindFilesOfExtensions(folderPath string, extensions ...string) ([]string, e
 	var filenames []string
 
 	for _, ext := range extensions {
-		ext = prefExtension(ext)
+		ext = PrefExtension(ext)
 		pattern := filepath.Join(folderPath, "*"+ext)
 
 		fullPaths, err := filepath.Glob(pattern)
@@ -75,7 +75,7 @@ func FindFilesOfExtensionsRecursive(folderPath string, extensions ...string) (ma
 	extMap := make(map[string]bool)
 
 	for _, ext := range extensions {
-		extMap[prefExtension(ext)] = true
+		extMap[PrefExtension(ext)] = true
 	}
 
 	err := filepath.WalkDir(folderPath, func(path string, d fs.DirEntry, err error) error {
@@ -101,7 +101,7 @@ func FindFilesOfExtensionsRecursive(folderPath string, extensions ...string) (ma
 
 func CheckAnyFileOfExtensionsExists(folderPath string, extensions ...string) (bool, error) {
 	for _, ext := range extensions {
-		ext = prefExtension(ext)
+		ext = PrefExtension(ext)
 		pattern := filepath.Join(folderPath, "*"+ext)
 		matches, err := filepath.Glob(pattern)
 		if err != nil {
@@ -114,8 +114,25 @@ func CheckAnyFileOfExtensionsExists(folderPath string, extensions ...string) (bo
 	return false, fmt.Errorf("no files found with extensions %v in %s", extensions, folderPath)
 }
 
+func EnsureDirExists(path string) error {
+	info, err := os.Stat(filepath.Dir(path))
+	if err != nil {
+		return err
+	}
+
+	if !info.IsDir() {
+		os.Mkdir(path, os.ModePerm)
+		_, err = os.Stat(path)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func EnsureFileExtension(filename, extension string) string {
-	extension = prefExtension(extension)
+	extension = PrefExtension(extension)
 
 	if !strings.HasPrefix(extension, ".") {
 		extension = "." + extension
@@ -133,13 +150,24 @@ func EnsureFileExtension(filename, extension string) string {
 
 func СheckFileExtension(path string, extensions ...string) bool {
 	for _, ext := range extensions {
-		ext = prefExtension(ext)
+		ext = PrefExtension(ext)
 		if filepath.Ext(path) == ext {
 			return true
 		}
 	}
 
 	return false
+}
+
+func ChangeFilenameExtension(filename, extension string) string {
+	extension = PrefExtension(extension)
+	dotIdx := strings.LastIndex(filename, ".")
+
+	if dotIdx == -1 {
+		return filename + extension
+	}
+
+	return filename[:dotIdx] + extension
 }
 
 func СheckFileExists(path string, watchDir bool) bool {
@@ -151,7 +179,7 @@ func GetFileExtension(filename string) string {
 	return filepath.Ext(filename)
 }
 
-func prefExtension(extension string) string {
+func PrefExtension(extension string) string {
 	if extension[0] == '.' {
 		return extension
 	}
