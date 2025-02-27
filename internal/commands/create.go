@@ -9,7 +9,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/aseprite"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/aseprite/commands"
-	"github.com/spinozanilast/aseprite-assets-cli/pkg/consts"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils"
 
 	config "github.com/spinozanilast/aseprite-assets-cli/pkg/config"
@@ -66,7 +65,7 @@ func (h *assetHandler) createAsset(opts *AssetCreateOptions) error {
 		return err
 	}
 
-	filename := filepath.Join(opts.OutputPath, strings.TrimSpace(opts.AssetName)+consts.Aseprite.String())
+	filename := filepath.Join(opts.OutputPath, strings.TrimSpace(opts.AssetName)+aseprite.Aseprite.String())
 
 	if utils.СheckFileExists(filename, false) {
 		return fmt.Errorf("file already exists: %s", filename)

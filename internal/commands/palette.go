@@ -18,7 +18,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/aseprite"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/aseprite/commands"
-	"github.com/spinozanilast/aseprite-assets-cli/pkg/consts"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils"
 
 	openai "github.com/sashabaranov/go-openai"
@@ -263,7 +262,7 @@ func (h *paletteHandler) collectSaveOptions(opts *PaletteOutputOptions, transpar
 					dir = "palettes"
 				}
 				path := fmt.Sprintf("%s/%s", dir, name)
-				for _, ext := range consts.PaletteExtensions() {
+				for _, ext := range aseprite.PaletteExtensions() {
 					if _, err := os.Stat(path + ext); err == nil {
 						return errors.New("file already exists")
 					}
@@ -276,14 +275,14 @@ func (h *paletteHandler) collectSaveOptions(opts *PaletteOutputOptions, transpar
 	}
 
 	if transparencyEnabled {
-		opts.FileType = consts.PNG.String()
+		opts.FileType = aseprite.PNG.String()
 	} else {
 		fileTypeQuestion := &survey.Question{
 			Name: "file-type",
 			Prompt: &survey.Select{
 				Message: "Select file type:",
-				Options: consts.PaletteExtensions(),
-				Default: consts.GPL.String(),
+				Options: aseprite.PaletteExtensions(),
+				Default: aseprite.GPL.String(),
 			},
 		}
 		questions = append(questions, fileTypeQuestion)
@@ -338,7 +337,7 @@ func (h *paletteHandler) savePalette(outputOpts *PaletteOutputOptions, paletteOp
 		Colors: colors,
 	}
 
-	if outputOpts.FileType == consts.PNG.String() {
+	if outputOpts.FileType == aseprite.PNG.String() {
 		if err := generatePNG(palette, outputPath); err != nil {
 			fatalError("Error generating palette: %v", err)
 		}

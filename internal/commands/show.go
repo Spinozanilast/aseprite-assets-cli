@@ -8,7 +8,6 @@ import (
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/aseprite"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/aseprite/commands"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/config"
-	"github.com/spinozanilast/aseprite-assets-cli/pkg/consts"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils"
 )
 
@@ -51,7 +50,7 @@ var showCommand = &cobra.Command{
 			return fmt.Errorf("failed to get filename flag: %w", err)
 		}
 
-		hasAvailableExt := utils.СheckFileExtension(filename, consts.AvailablePaletteExtensions()...)
+		hasAvailableExt := utils.СheckFileExtension(filename, aseprite.AvailablePaletteExtensions()...)
 		if !utils.СheckFileExists(filename, false) || !hasAvailableExt {
 			return fmt.Errorf("file does not exist")
 		}
@@ -118,7 +117,7 @@ func (h *showCmd) showAsset() error {
 func (h *showCmd) showAsepriteAsset() error {
 	var err error
 	var output string
-	if utils.СheckFileExtension(h.filename, consts.SpritesExtensions()...) && !h.isPalettePreview {
+	if utils.СheckFileExtension(h.filename, aseprite.SpritesExtensions()...) && !h.isPalettePreview {
 		showSpriteCmd := &commands.ShowSprite{
 			BatchMode:      true,
 			SpriteFilename: h.filename,

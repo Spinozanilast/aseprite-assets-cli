@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/spinozanilast/aseprite-assets-cli/pkg/consts"
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/aseprite"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -119,10 +119,10 @@ func (h *listHandler) setAssetParameters() error {
 	switch {
 	case h.listType&SpritesList != 0:
 		h.folders = h.config.AssetsFolderPaths
-		h.extensions = consts.SpritesExtensions()
+		h.extensions = aseprite.SpritesExtensions()
 	case h.listType&PalettesList != 0:
 		h.folders = h.config.PalettesFolderPaths
-		h.extensions = consts.PaletteExtensions()
+		h.extensions = aseprite.PaletteExtensions()
 	default:
 		return fmt.Errorf("invalid list type configuration")
 	}
