@@ -7,14 +7,13 @@ local color_modes = {
     ["indexed"] = ColorMode.INDEXED,
     ["rgb"] = ColorMode.RGB,
     ["gray"] = ColorMode.GRAYSCALE,
-    ["tilemap"] = ColorMode.BITMAP
 }
 
 if not color_modes[color_mode] then
     color_mode = "rgb"
 end
 
-local get_color_mode = function(color_mode)
+local get_color_mode = function()
     return color_modes[color_mode]
 end
 

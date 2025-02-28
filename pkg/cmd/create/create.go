@@ -1,7 +1,8 @@
-package commands
+package create
 
 import (
 	"fmt"
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/environment"
 	"path/filepath"
 	"strings"
 
@@ -11,7 +12,7 @@ import (
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/aseprite/commands"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils"
 
-	config "github.com/spinozanilast/aseprite-assets-cli/pkg/config"
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/config"
 )
 
 type AssetCreateOptions struct {
@@ -27,35 +28,33 @@ type assetHandler struct {
 	config *config.Config
 }
 
-var createCmd = &cobra.Command{
-	Use:     "create [ARG]",
-	Aliases: []string{"cr"},
-	Short:   "Create aseprite asset",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		config, err := config.LoadConfig()
-		if err != nil {
-			return err
-		}
+func NewCraeteCmd(env *environment.Environment) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "create [ARG]",
+		Aliases: []string{"cr"},
+		Short:   "Create aseprite asset",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cfg, err := config.LoadConfig()
+			if err != nil {
+				return err
+			}
 
-		h := &assetHandler{
-			config: config,
-		}
+			h := &assetHandler{
+				config: cfg,
+			}
 
-		opts, err := h.collectCreateOptions()
-		if err != nil {
-			fatalError("failed to collect create options: %w", err)
-		}
+			opts, err := h.collectCreateOptions()
+			if err != nil {
+				fmt.Errorf("failed to collect create options: %w", err)
+			}
 
-		if err := h.createAsset(opts); err != nil {
-			return err
-		}
+			if err := h.createAsset(opts); err != nil {
+				return err
+			}
 
-		return nil
-	},
-}
-
-func init() {
-	rootCmd.AddCommand(createCmd)
+			return nil
+		}}
+	return cmd
 }
 
 func (h *assetHandler) createAsset(opts *AssetCreateOptions) error {

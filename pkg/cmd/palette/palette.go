@@ -1,10 +1,11 @@
-package commands
+package palette
 
 import (
 	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/environment"
 	"image"
 	"image/color"
 	"image/png"
@@ -20,8 +21,8 @@ import (
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/aseprite/commands"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils"
 
-	openai "github.com/sashabaranov/go-openai"
-	config "github.com/spinozanilast/aseprite-assets-cli/pkg/config"
+	"github.com/sashabaranov/go-openai"
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/config"
 )
 
 type paletteHandler struct {
@@ -65,11 +66,15 @@ type PaletteOutputOptions struct {
 	PresetName         string             `survey:"preset-name"`
 }
 
-var paletteCmd = &cobra.Command{
-	Use:     "palette [ARG]",
-	Aliases: []string{"p"},
-	Short:   "Create aseprite palette from request to LLM",
-	RunE:    runPaletteCommand,
+func NewPaletteCmd(env *environment.Environment) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "palette [ARG]",
+		Aliases: []string{"p"},
+		Short:   "Create aseprite palette from request to LLM",
+		RunE:    runPaletteCommand,
+	}
+
+	return cmd
 }
 
 func runPaletteCommand(cmd *cobra.Command, args []string) error {
@@ -122,7 +127,7 @@ func (h *paletteHandler) generatePalette() error {
 
 	colors, err := h.generateColors(paletteOpts.toGenerationParams())
 	if err != nil {
-		fatalError("❌ Failed to generate colors: %v", err)
+		fmt.Errorf("❌ Failed to generate colors: %v", err)
 	}
 
 	presentResults(colors, 5)
@@ -147,19 +152,15 @@ func (h *paletteHandler) generatePalette() error {
 	return nil
 }
 
-func init() {
-	rootCmd.AddCommand(paletteCmd)
-}
-
 func initOpenAIClient(cfg config.OpenAiConfig) *openai.Client {
 	apiKey := cfg.ApiKey
 	if apiKey == "" {
-		fatalError("OPENAI_API_KEY environment variable is not set\nWrite `asseprite-cli config edit -k <key> -u <url> to set it`")
+		fmt.Errorf("OPENAI_API_KEY environment variable is not set\nWrite `asseprite-cli config edit -k <key> -u <url> to set it`")
 	}
 
 	apiUrl := cfg.ApiUrl
 	if apiUrl == "" {
-		fatalError("Open api url environment variable is not set\nWrite `asseprite-cli config edit -k <key> -u <url> to set it`")
+		fmt.Errorf("Open api url environment variable is not set\nWrite `asseprite-cli config edit -k <key> -u <url> to set it`")
 	}
 
 	clientConfig := openai.DefaultConfig(apiKey)
@@ -339,11 +340,11 @@ func (h *paletteHandler) savePalette(outputOpts *PaletteOutputOptions, paletteOp
 
 	if outputOpts.FileType == aseprite.PNG.String() {
 		if err := generatePNG(palette, outputPath); err != nil {
-			fatalError("Error generating palette: %v", err)
+			fmt.Errorf("Error generating palette: %v", err)
 		}
 	} else {
 		if err := generateGPL(palette, outputPath); err != nil {
-			fatalError("Error generating palette: %v", err)
+			fmt.Errorf("Error generating palette: %v", err)
 		}
 	}
 

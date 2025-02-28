@@ -99,6 +99,34 @@ func FindFilesOfExtensionsRecursive(folderPath string, extensions ...string) (ma
 	return results, err
 }
 
+func FindFilesOfExtensionsRecursiveFlatten(folderPath string, extensions ...string) ([]string, error) {
+	results := make([]string, 0)
+	extMap := make(map[string]bool)
+
+	for _, ext := range extensions {
+		extMap[PrefExtension(ext)] = true
+	}
+
+	err := filepath.WalkDir(folderPath, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if d.IsDir() {
+			return nil
+		}
+
+		fileExt := strings.ToLower(filepath.Ext(path))
+		if extMap[fileExt] {
+			results = append(results, path)
+		}
+
+		return nil
+	})
+
+	return results, err
+}
+
 func CheckAnyFileOfExtensionsExists(folderPath string, extensions ...string) (bool, error) {
 	for _, ext := range extensions {
 		ext = PrefExtension(ext)

@@ -1,4 +1,4 @@
-package commands
+package config
 
 import (
 	"os"
@@ -21,7 +21,7 @@ func TestConfigCommand(t *testing.T) {
 		scriptsDir := filepath.Join(tmpHome, "scripts")
 		require.NoError(t, os.Mkdir(scriptsDir, 0755))
 
-		cmd := configCmd
+		cmd := NewConfigCmd()
 		cmd.SetArgs([]string{"edit", "--scripts-dir", scriptsDir})
 		require.NoError(t, cmd.Execute())
 
@@ -34,7 +34,7 @@ func TestConfigCommand(t *testing.T) {
 		tmpHome := t.TempDir()
 		t.Setenv("HOME", tmpHome)
 
-		cmd := configCmd
+		cmd := NewConfigCmd()
 		cmd.SetArgs([]string{"edit", "--scripts-dir", "default"})
 		require.NoError(t, cmd.Execute())
 

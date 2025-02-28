@@ -1,16 +1,15 @@
-package commands
+package list
 
 import (
 	"fmt"
-	"os"
-
 	"github.com/spf13/cobra"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/aseprite"
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/config"
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/environment"
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/tui"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils"
 
-	tea "github.com/charmbracelet/bubbletea"
 	list "github.com/spinozanilast/aseprite-assets-cli/internal/tui/list"
-	config "github.com/spinozanilast/aseprite-assets-cli/pkg/config"
 )
 
 type ListType int
@@ -22,6 +21,13 @@ const (
 	UnknownList = 0
 )
 
+type ListOptions struct {
+	Config      func() (*config.Config, error)
+	Recursive   bool
+	SpriteList  bool
+	PaletteList bool
+}
+
 type listHandler struct {
 	config     *config.Config
 	listType   ListType
@@ -29,46 +35,36 @@ type listHandler struct {
 	folders    []string
 }
 
-var listCmd = &cobra.Command{
-	Use:     "list",
-	Aliases: []string{"l"},
-	Short:   "List existing aseprite assets",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		cfg, err := config.LoadConfig()
-		if err != nil {
-			return fmt.Errorf("failed to load config: %w", err)
-		}
+func NewListCmd(env *environment.Environment) *cobra.Command {
+	opts := &ListOptions{
+		Config: env.Config,
+	}
 
-		handler, err := setupListHandler(cmd, cfg)
-		if err != nil {
-			return err
-		}
+	cmd := &cobra.Command{
+		Use:     "list",
+		Aliases: []string{"l"},
+		Short:   "List existing aseprite assets",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runList(opts)
+		},
+	}
 
-		sources, err := handler.findAssetSources()
-		if err != nil {
-			return err
-		}
+	cmd.Flags().BoolVarP(&opts.Recursive, "recursive", "r", false, "recursive search for selected source")
+	cmd.Flags().BoolVarP(&opts.SpriteList, "sprites", "s", false, "list sprites")
+	cmd.Flags().BoolVarP(&opts.PaletteList, "palettes", "p", false, "list palettes")
 
-		handler.startTui(sources)
-		return nil
-	},
+	return cmd
 }
 
-func init() {
-	listCmd.Flags().BoolP("recursive", "r", false, "recursive search for assets")
-	listCmd.Flags().BoolP("sprites", "s", false, "assets extension")
-	listCmd.Flags().BoolP("palettes", "p", false, "assets extension")
-	rootCmd.AddCommand(listCmd)
-}
-
-func setupListHandler(cmd *cobra.Command, cfg *config.Config) (*listHandler, error) {
-	recursive, _ := cmd.Flags().GetBool("recursive")
-	sprites, _ := cmd.Flags().GetBool("sprites")
-	palettes, _ := cmd.Flags().GetBool("palettes")
-
-	listType, err := validateListType(sprites, palettes, recursive)
+func runList(opts *ListOptions) error {
+	cfg, err := opts.Config()
 	if err != nil {
-		return nil, err
+		return fmt.Errorf("failed to load config: %w", err)
+	}
+
+	listType, err := opts.validateListType()
+	if err != nil {
+		return err
 	}
 
 	handler := &listHandler{
@@ -76,46 +72,46 @@ func setupListHandler(cmd *cobra.Command, cfg *config.Config) (*listHandler, err
 		listType: listType,
 	}
 
-	if err := handler.setAssetParameters(); err != nil {
-		return nil, err
+	if err := handler.specifyListParameters(); err != nil {
+		return err
 	}
 
-	return handler, nil
+	sources, err := handler.findSources()
+	if err != nil {
+		return err
+	}
+
+	if err = tui.StartListTui(WriteTitle(handler.listType), cfg.AsepritePath, sources); err != nil {
+
+	}
+
+	return nil
 }
 
-func validateListType(sprites, palettes, recursive bool) (ListType, error) {
-	if sprites && palettes {
+func (opts *ListOptions) validateListType() (ListType, error) {
+	if opts.SpriteList && opts.PaletteList {
 		return UnknownList, fmt.Errorf("cannot list both sprites and palettes at the same time")
 	}
 
-	var lt ListType
-	if sprites {
-		lt |= SpritesList
-	}
-	if palettes {
-		lt |= PalettesList
-	}
-	if recursive {
-		lt |= RecursiveList
+	if !opts.SpriteList && !opts.PaletteList {
+		return UnknownList, fmt.Errorf("must specify either sprites or palettes")
 	}
 
-	if lt&(SpritesList|PalettesList) == 0 {
-		return UnknownList, fmt.Errorf("must specify either sprites or palettes")
+	var lt ListType
+	if opts.SpriteList {
+		lt |= SpritesList
+	}
+	if opts.PaletteList {
+		lt |= PalettesList
+	}
+	if opts.Recursive {
+		lt |= RecursiveList
 	}
 
 	return lt, nil
 }
 
-func (h *listHandler) startTui(sources []list.AssetsSource) {
-	title := WriteTitle(h.listType)
-	p := tea.NewProgram(list.InitialModel(title, h.config.AsepritePath, sources))
-	if _, err := p.Run(); err != nil {
-		fmt.Fprintf(os.Stderr, "Oopsy, something went wrong and cli is not executing properly: '%s'", err)
-		os.Exit(1)
-	}
-}
-
-func (h *listHandler) setAssetParameters() error {
+func (h *listHandler) specifyListParameters() error {
 	switch {
 	case h.listType&SpritesList != 0:
 		h.folders = h.config.AssetsFolderPaths
@@ -126,17 +122,24 @@ func (h *listHandler) setAssetParameters() error {
 	default:
 		return fmt.Errorf("invalid list type configuration")
 	}
+
+	if len(h.folders) == 0 {
+		return fmt.Errorf("no folder found for list of assets in config for searching assets type")
+	}
+
 	return nil
 }
 
-func (h *listHandler) findAssetSources() ([]list.AssetsSource, error) {
+func (h *listHandler) findSources() ([]list.AssetsSource, error) {
+	// if recursive flag was added
 	if h.listType&RecursiveList != 0 {
-		return h.findRecursiveSources()
+		return h.findSourcesRecursive()
 	}
 	return h.findFlatSources()
 }
 
-func (h *listHandler) findRecursiveSources() ([]list.AssetsSource, error) {
+// findSourcesRecursive finds assets recursively (watching inner folders for files)
+func (h *listHandler) findSourcesRecursive() ([]list.AssetsSource, error) {
 	var sources []list.AssetsSource
 
 	for _, dir := range h.folders {
@@ -157,6 +160,7 @@ func (h *listHandler) findRecursiveSources() ([]list.AssetsSource, error) {
 	return sources, nil
 }
 
+// findSourcesRecursive finds assets recursively (don't watching inner folders)
 func (h *listHandler) findFlatSources() ([]list.AssetsSource, error) {
 	var sources []list.AssetsSource
 

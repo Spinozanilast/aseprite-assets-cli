@@ -86,6 +86,7 @@ local function save_scaled_versions(sprite, base_path, scales)
             format
         )
 
+        print(output_path)
         app.command.SaveFileCopyAs {
             filename = output_path,
             scale = numeric_scale
@@ -117,6 +118,7 @@ local function save_sized_versions(sprite, base_path, sizes)
             format
         )
 
+        print(output_path)
         app.command.SaveFileCopyAs { filename = output_path }
         resized_sprite:close()
     end
