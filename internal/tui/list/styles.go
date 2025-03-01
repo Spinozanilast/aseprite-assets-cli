@@ -30,7 +30,7 @@ func DefaultStyles() *Styles {
 	s.Help = lipgloss.NewStyle().Bold(true)
 
 	s.CurrentFolder = lipgloss.NewStyle().
-		Bold(true).Foreground(lipgloss.Color("61")).Background(lipgloss.Color("240"))
+		Bold(true).Foreground(lipgloss.Color("62"))
 	s.BeforeAfterFolders = s.CurrentFolder.
 		Bold(false).Foreground(lipgloss.Color("60")).UnsetBackground()
 

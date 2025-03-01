@@ -156,8 +156,8 @@ func InitialModel(config *config.Config) Model {
 	}
 
 	if len(config.PalettesFolderPaths) != 0 {
-		generate := model.FieldsGenerator(consts.Sprite)
-		generate(config.AssetsFolderPaths)
+		generate := model.FieldsGenerator(consts.Palette)
+		generate(config.PalettesFolderPaths)
 	}
 
 	model.fields[OpenAiKeyFld].SetValue(config.OpenAiConfig.ApiKey)

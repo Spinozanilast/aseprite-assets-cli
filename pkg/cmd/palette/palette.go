@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/spinozanilast/aseprite-assets-cli/pkg/environment"
 	"image"
 	"image/color"
 	"image/png"
@@ -19,6 +18,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/aseprite"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/aseprite/commands"
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/environment"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils"
 
 	"github.com/sashabaranov/go-openai"
@@ -32,10 +32,10 @@ type paletteHandler struct {
 	availableModels []string
 }
 
-type PaletteSaveVariant int
+type SaveVariant int
 
 const (
-	SaveAsPreset PaletteSaveVariant = iota
+	SaveAsPreset SaveVariant = iota
 	SaveFile
 	Both
 )
@@ -57,13 +57,13 @@ type Palette struct {
 	Colors []Color
 }
 
-type PaletteOutputOptions struct {
-	Ui                 bool               `survey:"ui"`
-	Directory          string             `survey:"directory"`
-	PaletteName        string             `survey:"name"`
-	FileType           string             `survey:"file-type"`
-	PaletteSaveVariant PaletteSaveVariant `survey:"save-variant"`
-	PresetName         string             `survey:"preset-name"`
+type OutputOptions struct {
+	Ui                 bool        `survey:"ui"`
+	Directory          string      `survey:"directory"`
+	PaletteName        string      `survey:"name"`
+	FileType           string      `survey:"file-type"`
+	PaletteSaveVariant SaveVariant `survey:"save-variant"`
+	PresetName         string      `survey:"preset-name"`
 }
 
 func NewPaletteCmd(env *environment.Environment) *cobra.Command {
@@ -71,33 +71,34 @@ func NewPaletteCmd(env *environment.Environment) *cobra.Command {
 		Use:     "palette [ARG]",
 		Aliases: []string{"p"},
 		Short:   "Create aseprite palette from request to LLM",
-		RunE:    runPaletteCommand,
-	}
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cfg, err := env.Config()
+			if err != nil {
+				return err
+			}
 
-	return cmd
-}
-
-func runPaletteCommand(cmd *cobra.Command, args []string) error {
-	config, err := config.LoadConfig()
-	if err != nil {
-		return err
-	}
-
-	handler := &paletteHandler{
-		config:       config,
-		openAiClient: initOpenAIClient(config.OpenAiConfig),
-		asepriteCli:  aseprite.NewCLI(config.AsepritePath, config.ScriptDirPath),
-		availableModels: []string{
-			openai.GPT3Dot5Turbo,
-			openai.GPT4oMini,
-			openai.GPT4o,
-			openai.O1Mini,
-			openai.GPT4Turbo,
-			openai.GPT4,
+			if openaiClient, err := initOpenAIClient(cfg.OpenAiConfig.ApiKey, cfg.OpenAiConfig.ApiUrl); err == nil {
+				handler := &paletteHandler{
+					config:       cfg,
+					openAiClient: openaiClient,
+					asepriteCli:  aseprite.NewCLI(cfg.AsepritePath, cfg.ScriptDirPath),
+					availableModels: []string{
+						openai.GPT3Dot5Turbo,
+						openai.GPT4oMini,
+						openai.GPT4o,
+						openai.O1Mini,
+						openai.GPT4Turbo,
+						openai.GPT4,
+					},
+				}
+				return handler.generatePalette()
+			} else {
+				return err
+			}
 		},
 	}
 
-	return handler.generatePalette()
+	return cmd
 }
 
 type generationParams struct {
@@ -127,12 +128,15 @@ func (h *paletteHandler) generatePalette() error {
 
 	colors, err := h.generateColors(paletteOpts.toGenerationParams())
 	if err != nil {
-		fmt.Errorf("❌ Failed to generate colors: %v", err)
+		return fmt.Errorf("❌ Failed to generate colors:\n%v", err)
 	}
 
-	presentResults(colors, 5)
+	err = presentResults(colors, 5)
+	if err != nil {
+		return err
+	}
 
-	outputOpts := &PaletteOutputOptions{}
+	outputOpts := &OutputOptions{}
 
 	paletteConfirmed := collectConfirmPaletteOptions(outputOpts)
 
@@ -141,31 +145,29 @@ func (h *paletteHandler) generatePalette() error {
 		return nil
 	}
 
-	err = h.collectSaveOptions(outputOpts, paletteOpts.Transparency)
+	if err = h.collectSaveOptions(outputOpts, paletteOpts.Transparency); err != nil {
+		return err
+	}
 
-	h.savePalette(outputOpts, paletteOpts, colors)
-
-	if err != nil {
+	if err = h.savePalette(outputOpts, paletteOpts, colors); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func initOpenAIClient(cfg config.OpenAiConfig) *openai.Client {
-	apiKey := cfg.ApiKey
-	if apiKey == "" {
-		fmt.Errorf("OPENAI_API_KEY environment variable is not set\nWrite `asseprite-cli config edit -k <key> -u <url> to set it`")
+func initOpenAIClient(key string, url string) (*openai.Client, error) {
+	if key == "" {
+		return nil, fmt.Errorf("OPENAI_API_KEY environment variable is not set\nWrite `asseprite-cli config edit -k <key> -u <url> to set it`")
 	}
 
-	apiUrl := cfg.ApiUrl
-	if apiUrl == "" {
-		fmt.Errorf("Open api url environment variable is not set\nWrite `asseprite-cli config edit -k <key> -u <url> to set it`")
+	if url == "" {
+		return nil, fmt.Errorf("Open api url environment variable is not set\nWrite `asseprite-cli config edit -k <key> -u <url> to set it`")
 	}
 
-	clientConfig := openai.DefaultConfig(apiKey)
-	clientConfig.BaseURL = apiUrl
-	return openai.NewClientWithConfig(clientConfig)
+	clientConfig := openai.DefaultConfig(key)
+	clientConfig.BaseURL = url
+	return openai.NewClientWithConfig(clientConfig), nil
 }
 
 func (h *paletteHandler) collectPaletteOptions() (*PaletteOptions, error) {
@@ -226,12 +228,43 @@ func (h *paletteHandler) collectPaletteOptions() (*PaletteOptions, error) {
 	return opts, nil
 }
 
-func (h *paletteHandler) collectSaveOptions(opts *PaletteOutputOptions, transparencyEnabled bool) error {
+func collectConfirmPaletteOptions(opts *OutputOptions) (confirm bool) {
+	confirmGenerationPrompt := &survey.Confirm{
+		Message: "Are you want to save this palette?",
+		Default: true,
+	}
+	survey.AskOne(confirmGenerationPrompt, &confirm)
+
+	if confirm {
+		saveVariantPrompt := &survey.Select{
+			Message: "Select save variant:",
+			Options: SaveVariants(),
+			Default: SaveFile.String(),
+		}
+
+		var selectedVariantS string
+		survey.AskOne(saveVariantPrompt, &selectedVariantS)
+		selectedVariant := SaveVariantFromString(selectedVariantS)
+
+		if selectedVariant != SaveFile {
+			prompt := &survey.Input{
+				Message: "Palette preset name:",
+				Default: opts.PaletteName,
+			}
+			survey.AskOne(prompt, &opts.PresetName)
+		}
+
+		opts.PaletteSaveVariant = selectedVariant
+	}
+
+	return confirm
+}
+
+func (h *paletteHandler) collectSaveOptions(opts *OutputOptions, transparencyEnabled bool) error {
 	selectedSaveVariant := opts.PaletteSaveVariant
 
 	var questions []*survey.Question
 	if selectedSaveVariant != SaveAsPreset {
-
 		outputDirQuestion := &survey.Question{
 			Name: "directory",
 			Prompt: &survey.Input{
@@ -297,39 +330,7 @@ func (h *paletteHandler) collectSaveOptions(opts *PaletteOutputOptions, transpar
 	return nil
 }
 
-func collectConfirmPaletteOptions(opts *PaletteOutputOptions) (confirm bool) {
-	confirmGenerationPrompt := &survey.Confirm{
-		Message: "Are you want to save this palette?",
-		Default: true,
-	}
-	survey.AskOne(confirmGenerationPrompt, &confirm)
-
-	if confirm {
-		saveVariantPrompt := &survey.Select{
-			Message: "Select save variant:",
-			Options: SaveVariants(),
-			Default: SaveFile.String(),
-		}
-
-		var selectedVariantS string
-		survey.AskOne(saveVariantPrompt, &selectedVariantS)
-		selectedVariant := SaveVariantFromString(selectedVariantS)
-
-		if selectedVariant != SaveFile {
-			prompt := &survey.Input{
-				Message: "Palette preset name:",
-				Default: opts.PaletteName,
-			}
-			survey.AskOne(prompt, &opts.PresetName)
-		}
-
-		opts.PaletteSaveVariant = selectedVariant
-	}
-
-	return confirm
-}
-
-func (h *paletteHandler) savePalette(outputOpts *PaletteOutputOptions, paletteOpts *PaletteOptions, colors []Color) {
+func (h *paletteHandler) savePalette(outputOpts *OutputOptions, paletteOpts *PaletteOptions, colors []Color) error {
 	outputPath := filepath.Join(outputOpts.Directory, outputOpts.PaletteName)
 	outputPath = utils.EnsureFileExtension(outputPath, outputOpts.FileType)
 
@@ -340,11 +341,11 @@ func (h *paletteHandler) savePalette(outputOpts *PaletteOutputOptions, paletteOp
 
 	if outputOpts.FileType == aseprite.PNG.String() {
 		if err := generatePNG(palette, outputPath); err != nil {
-			fmt.Errorf("Error generating palette: %v", err)
+			return fmt.Errorf("error generating palette png: %v", err)
 		}
 	} else {
 		if err := generateGPL(palette, outputPath); err != nil {
-			fmt.Errorf("Error generating palette: %v", err)
+			return fmt.Errorf("error generating palette gpl: %v", err)
 		}
 	}
 
@@ -353,12 +354,18 @@ func (h *paletteHandler) savePalette(outputOpts *PaletteOutputOptions, paletteOp
 	if outputOpts.PaletteSaveVariant != SaveFile {
 		asepriteCli := aseprite.NewCLI(h.config.AsepritePath, h.config.ScriptDirPath)
 
-		asepriteCli.ExecuteCommand(&commands.SavePalette{
+		err := asepriteCli.ExecuteCommand(&commands.SavePalette{
 			BatchMode:       true,
 			PresetName:      outputOpts.PresetName,
 			PaletteFilename: outputPath,
 		})
+
+		if err != nil {
+			return err
+		}
 	}
+
+	return nil
 }
 
 func (h *paletteHandler) generateColors(params generationParams) ([]Color, error) {
@@ -519,6 +526,7 @@ func generatePNG(palette Palette, path string) error {
 	if err != nil {
 		return fmt.Errorf("failed to create PNG file: %w", err)
 	}
+
 	defer file.Close()
 
 	if err := png.Encode(file, img); err != nil {
@@ -549,7 +557,7 @@ func presentResults(colors []Color, colorsPerRow int) error {
 	return nil
 }
 
-func (s PaletteSaveVariant) String() string {
+func (s SaveVariant) String() string {
 	switch s {
 	case SaveAsPreset:
 		return "Save as preset"
@@ -562,7 +570,7 @@ func (s PaletteSaveVariant) String() string {
 	}
 }
 
-func SaveVariantFromString(variant string) PaletteSaveVariant {
+func SaveVariantFromString(variant string) SaveVariant {
 	switch variant {
 	case SaveAsPreset.String():
 		return SaveAsPreset

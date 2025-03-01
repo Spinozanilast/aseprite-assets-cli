@@ -48,19 +48,19 @@ func (m Model) renderFolderNavigation() string {
 		Width(prevWidth).
 		MaxWidth(prevWidth).
 		Align(lipgloss.Left).
-		Render("< " + m.prevFolderName)
+		Render(m.prevFolderName)
 
 	currentSection := m.styles.CurrentFolder.
 		Width(currentWidth).
 		MaxWidth(currentWidth).
 		Align(lipgloss.Center).
-		Render(m.activeFolderName)
+		Render("<-- " + m.activeFolderName + " -->")
 
 	nextSection := m.styles.BeforeAfterFolders.
 		Width(nextWidth).
 		MaxWidth(nextWidth).
 		Align(lipgloss.Right).
-		Render(m.nextFolderName + " >")
+		Render(m.nextFolderName)
 
 	return lipgloss.JoinHorizontal(lipgloss.Top, prevSection, currentSection, nextSection)
 }

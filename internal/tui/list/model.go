@@ -151,11 +151,11 @@ func InitialModel(title string, appPath string, assetsFolders []Source) Model {
 		nextFolderName = assetsFolders[1].GetFolderPath()
 	}
 
-	list := list.New(items, itemDelegate{}, listLayoutStyles.ListWidth, listLayoutStyles.ListHeight)
+	listModel := list.New(items, itemDelegate{}, listLayoutStyles.ListWidth, listLayoutStyles.ListHeight)
 
 	return Model{
 		appPath:          appPath,
-		list:             list,
+		list:             listModel,
 		assetsFolders:    assetsFolders,
 		assetsActive:     assetsActive,
 		activeFolderIdx:  0,

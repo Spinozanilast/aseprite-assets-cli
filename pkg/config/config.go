@@ -96,10 +96,7 @@ func initConfig() error {
 
 	viper.AutomaticEnv()
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-
-	viper.BindEnv(OpenAiConfigKey+".api_key", "OPENAI_API_KEY")
-	viper.BindEnv(OpenAiConfigKey+".api_url", "OPENAI_API_URL")
-
+	
 	pwd, err := os.Getwd()
 	if err != nil {
 		return fmt.Errorf("failed to get working directory: %w", err)
@@ -110,6 +107,7 @@ func initConfig() error {
 	viper.SetDefault(ScriptDirKey, filepath.Join(pwd, "scripts"))
 	viper.SetDefault(OpenAiConfigKey, OpenAiConfig{
 		ApiUrl: "https://api.openai.com/v1",
+		ApiKey: os.Getenv("OPENAI_API_KEY"),
 	})
 	viper.SetDefault(PalettesDirsKey, []string{})
 
