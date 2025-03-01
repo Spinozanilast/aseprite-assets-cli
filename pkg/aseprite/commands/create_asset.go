@@ -11,7 +11,7 @@ type AssetCreate struct {
 }
 
 func (c *AssetCreate) ScriptName() string {
-	return "create-file.lua"
+	return "sprite-file.lua"
 }
 
 func (c *AssetCreate) Args() []string {

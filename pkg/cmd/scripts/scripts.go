@@ -8,7 +8,7 @@ import (
 func NewScriptsCmd(env *environment.Environment) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "scripts",
-		Aliases: []string{"s"},
+		Aliases: []string{"sp"},
 		Short:   "List existing included scripts for aseprite cli",
 		Long: `
 	1) CreateAsset command creates a new asset with the specified options.

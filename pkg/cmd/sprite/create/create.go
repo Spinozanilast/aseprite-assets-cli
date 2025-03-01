@@ -28,11 +28,11 @@ type assetHandler struct {
 	config *config.Config
 }
 
-func NewCraeteCmd(env *environment.Environment) *cobra.Command {
+func NewSpriteCreateCmd(env *environment.Environment) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "create [ARG]",
-		Aliases: []string{"cr"},
-		Short:   "Create aseprite asset",
+		Use:     "create",
+		Aliases: []string{"c", "cr"},
+		Short:   "Create aseprite sprite",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := config.LoadConfig()
 			if err != nil {
@@ -45,7 +45,8 @@ func NewCraeteCmd(env *environment.Environment) *cobra.Command {
 
 			opts, err := h.collectCreateOptions()
 			if err != nil {
-				fmt.Errorf("failed to collect create options: %w", err)
+
+				return fmt.Errorf("failed to collect sprite options: %w", err)
 			}
 
 			if err := h.createAsset(opts); err != nil {

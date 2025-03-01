@@ -18,6 +18,7 @@ Requires Aseprite CLI parameters:
   --scales           Comma-separated scale factors
 ]]
 
+--TODO: add support for disabling multiple frames export
 
 local sprite_filename = app.params["sprite-filename"]
 local output_filename = app.params["output-filename"]

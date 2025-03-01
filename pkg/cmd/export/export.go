@@ -118,7 +118,7 @@ func (h *exportHandler) export() error {
 	}
 
 	if err := utils.EnsureDirExists(outputPath); err != nil {
-		return fmt.Errorf("failed to create output directory: %w", err)
+		return fmt.Errorf("failed to sprite output directory: %w", err)
 	}
 
 	log.Printf("Exporting sprite: %s to output: %s", opts.SpriteFilename, outputPath)

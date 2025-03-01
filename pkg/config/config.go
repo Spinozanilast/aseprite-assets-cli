@@ -96,7 +96,7 @@ func initConfig() error {
 
 	viper.AutomaticEnv()
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-	
+
 	pwd, err := os.Getwd()
 	if err != nil {
 		return fmt.Errorf("failed to get working directory: %w", err)
@@ -116,7 +116,7 @@ func initConfig() error {
 		if errors.As(err, &configFileNotFoundError) {
 			// Ensure the directory exists before writing
 			if err := os.MkdirAll(filepath.Dir(configFile), 0755); err != nil {
-				return fmt.Errorf("failed to create config directory: %w", err)
+				return fmt.Errorf("failed to sprite config directory: %w", err)
 			}
 			if err := viper.SafeWriteConfig(); err != nil {
 				return fmt.Errorf("failed to write initial config: %w", err)
