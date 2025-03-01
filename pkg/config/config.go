@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -45,7 +46,7 @@ func LoadConfig() (*Config, error) {
 	return &config, nil
 }
 
-func ConfigInfo() string {
+func Info() string {
 	return fmt.Sprintf("Config file used: %s\nAll settings: %+v", viper.ConfigFileUsed(), viper.AllSettings())
 }
 
@@ -113,7 +114,8 @@ func initConfig() error {
 	viper.SetDefault(PalettesDirsKey, []string{})
 
 	if err := viper.ReadInConfig(); err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+		var configFileNotFoundError viper.ConfigFileNotFoundError
+		if errors.As(err, &configFileNotFoundError) {
 			// Ensure the directory exists before writing
 			if err := os.MkdirAll(filepath.Dir(configFile), 0755); err != nil {
 				return fmt.Errorf("failed to create config directory: %w", err)
@@ -121,8 +123,6 @@ func initConfig() error {
 			if err := viper.SafeWriteConfig(); err != nil {
 				return fmt.Errorf("failed to write initial config: %w", err)
 			}
-		} else {
-			return fmt.Errorf("failed to read config: %w", err)
 		}
 	}
 

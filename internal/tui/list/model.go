@@ -48,30 +48,30 @@ func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list
 	fmt.Fprint(w, fn(str))
 }
 
-type AssetsSource struct {
+type Source struct {
 	folderPath  string
 	assetsNames []string
 }
 
-func (a *AssetsSource) GetAssetsNames() []string {
+func (a *Source) GetAssetsNames() []string {
 	return a.assetsNames
 }
 
-func (a *AssetsSource) GetFolderPath() string {
+func (a *Source) GetFolderPath() string {
 	return a.folderPath
 }
 
-func NewAssetsSource(folderPath string, assetsNames []string) AssetsSource {
-	return AssetsSource{
+func NewAssetsSource(folderPath string, assetsNames []string) Source {
+	return Source{
 		folderPath:  folderPath,
 		assetsNames: assetsNames,
 	}
 }
 
-type model struct {
+type Model struct {
 	list             list.Model
 	appPath          string
-	assetsFolders    []AssetsSource
+	assetsFolders    []Source
 	assetsActive     []int
 	activeFolderIdx  int
 	activeFolderName string
@@ -128,7 +128,7 @@ var keys = keyMap{
 	),
 }
 
-func InitialModel(title string, appPath string, assetsFolders []AssetsSource) model {
+func InitialModel(title string, appPath string, assetsFolders []Source) Model {
 	h := help.New()
 	h.ShowAll = true
 	folderLength := len(assetsFolders)
@@ -153,7 +153,7 @@ func InitialModel(title string, appPath string, assetsFolders []AssetsSource) mo
 
 	list := list.New(items, itemDelegate{}, listLayoutStyles.ListWidth, listLayoutStyles.ListHeight)
 
-	return model{
+	return Model{
 		appPath:          appPath,
 		list:             list,
 		assetsFolders:    assetsFolders,
@@ -168,11 +168,11 @@ func InitialModel(title string, appPath string, assetsFolders []AssetsSource) mo
 	}
 }
 
-func (m model) Init() tea.Cmd {
+func (m Model) Init() tea.Cmd {
 	return nil
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if m.quitting {
 		return m, tea.Quit
 	}
@@ -210,14 +210,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m *model) handleEnterKey() (tea.Model, tea.Cmd) {
+func (m *Model) handleEnterKey() (tea.Model, tea.Cmd) {
 	selectedItem := m.currentAssets()[m.list.Index()]
 	filename := filepath.Join(m.activeFolderName, selectedItem)
 	utils.OpenFileWith(filename, m.appPath)
 	return m, nil
 }
 
-func (m *model) moveBetweenFoldersFocus(direction Direction) *model {
+func (m *Model) moveBetweenFoldersFocus(direction Direction) *Model {
 	total := len(m.assetsFolders)
 	m.assetsActive[m.activeFolderIdx] = m.list.Index()
 
@@ -228,7 +228,7 @@ func (m *model) moveBetweenFoldersFocus(direction Direction) *model {
 	return m
 }
 
-func (m *model) updateListContent() {
+func (m *Model) updateListContent() {
 	storedPos := m.assetsActive[m.activeFolderIdx]
 
 	items := createListItems(m.currentAssets())
@@ -238,11 +238,11 @@ func (m *model) updateListContent() {
 	m.list.SetSize(m.list.Width(), m.list.Height())
 }
 
-func (m *model) currentAssets() []string {
+func (m *Model) currentAssets() []string {
 	return m.assetsFolders[m.activeFolderIdx].GetAssetsNames()
 }
 
-func (m *model) updateFolderMetadata() {
+func (m *Model) updateFolderMetadata() {
 	total := len(m.assetsFolders)
 
 	if total == 1 {

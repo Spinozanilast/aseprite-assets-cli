@@ -11,7 +11,7 @@ func NewConfigOpenCmd(env *environment.Environment) *cobra.Command {
 		Use:   "info",
 		Short: "Show current configuration",
 		Run: func(cmd *cobra.Command, args []string) {
-			config.ConfigInfo()
+			config.Info()
 		},
 	}
 

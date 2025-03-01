@@ -4,10 +4,9 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
-	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils"
 )
 
-func (m model) View() string {
+func (m Model) View() string {
 	var mainContent strings.Builder
 
 	// Title section
@@ -37,16 +36,31 @@ func (m model) View() string {
 	return m.styles.App.Render(mainContent.String())
 }
 
-func (m model) renderFolderNavigation() string {
-	maxLen := utils.MaxLength(m.prevFolderName, m.activeFolderName, m.nextFolderName)
+func (m Model) renderFolderNavigation() string {
+	sectionWidth := m.appWidth / 3
+	remainder := m.appWidth % 3
 
-	sectionWidth := maxLen + 2
+	prevWidth := sectionWidth
+	currentWidth := sectionWidth + remainder
+	nextWidth := sectionWidth
 
-	prevSection := m.styles.BeforeAfterFolders.Width(sectionWidth).AlignHorizontal(lipgloss.Left).Render("< " + m.prevFolderName)
-	currentSection := m.styles.CurrentFolder.Width(sectionWidth).AlignHorizontal(lipgloss.Center).Render(m.activeFolderName)
-	nextSection := m.styles.BeforeAfterFolders.Width(sectionWidth).AlignHorizontal(lipgloss.Right).Render(m.nextFolderName + " >")
+	prevSection := m.styles.BeforeAfterFolders.
+		Width(prevWidth).
+		MaxWidth(prevWidth).
+		Align(lipgloss.Left).
+		Render("< " + m.prevFolderName)
 
-	folderNavigation := lipgloss.JoinHorizontal(lipgloss.Center, prevSection, currentSection, nextSection)
+	currentSection := m.styles.CurrentFolder.
+		Width(currentWidth).
+		MaxWidth(currentWidth).
+		Align(lipgloss.Center).
+		Render(m.activeFolderName)
 
-	return lipgloss.PlaceHorizontal(m.appWidth, lipgloss.Left, folderNavigation)
+	nextSection := m.styles.BeforeAfterFolders.
+		Width(nextWidth).
+		MaxWidth(nextWidth).
+		Align(lipgloss.Right).
+		Render(m.nextFolderName + " >")
+
+	return lipgloss.JoinHorizontal(lipgloss.Top, prevSection, currentSection, nextSection)
 }

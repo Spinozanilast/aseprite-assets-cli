@@ -7,7 +7,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-func (m model) View() string {
+func (m Model) View() string {
 	if m.quitting {
 		return "Configuration cancelled\n"
 	}
@@ -57,7 +57,7 @@ func (m model) View() string {
 	return m.styles.App.Render(mainContent.String())
 }
 
-func (m model) renderInputField(field *inputField, label string, idx int) string {
+func (m Model) renderInputField(field *inputField, label string, idx int) string {
 	isActive := idx == m.activeFieldIndex
 	var style lipgloss.Style
 

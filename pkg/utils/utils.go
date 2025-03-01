@@ -2,14 +2,14 @@ package utils
 
 import "github.com/spinozanilast/aseprite-assets-cli/pkg/consts"
 
-func MaxLength(strings ...string) int {
-	max := 0
+func MinLength(strings ...string) int {
+	minl := 300
 	for _, s := range strings {
-		if len(s) > max {
-			max = len(s)
+		if len(s) < minl {
+			minl = len(s)
 		}
 	}
-	return max
+	return minl
 }
 
 func ColorFormatFromString(format string) consts.ColorFormat {

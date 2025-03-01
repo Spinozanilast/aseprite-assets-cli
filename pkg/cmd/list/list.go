@@ -124,13 +124,13 @@ func (h *listHandler) specifyListParameters() error {
 	}
 
 	if len(h.folders) == 0 {
-		return fmt.Errorf("no folder found for list of assets in config for searching assets type")
+		return fmt.Errorf("no folder found for list of assets in config for searching selected assets type")
 	}
 
 	return nil
 }
 
-func (h *listHandler) findSources() ([]list.AssetsSource, error) {
+func (h *listHandler) findSources() ([]list.Source, error) {
 	// if recursive flag was added
 	if h.listType&RecursiveList != 0 {
 		return h.findSourcesRecursive()
@@ -139,8 +139,8 @@ func (h *listHandler) findSources() ([]list.AssetsSource, error) {
 }
 
 // findSourcesRecursive finds assets recursively (watching inner folders for files)
-func (h *listHandler) findSourcesRecursive() ([]list.AssetsSource, error) {
-	var sources []list.AssetsSource
+func (h *listHandler) findSourcesRecursive() ([]list.Source, error) {
+	var sources []list.Source
 
 	for _, dir := range h.folders {
 		if !utils.СheckFileExists(dir, true) {
@@ -161,8 +161,8 @@ func (h *listHandler) findSourcesRecursive() ([]list.AssetsSource, error) {
 }
 
 // findSourcesRecursive finds assets recursively (don't watching inner folders)
-func (h *listHandler) findFlatSources() ([]list.AssetsSource, error) {
-	var sources []list.AssetsSource
+func (h *listHandler) findFlatSources() ([]list.Source, error) {
+	var sources []list.Source
 
 	for _, dir := range h.folders {
 		if !utils.СheckFileExists(dir, true) {

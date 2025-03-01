@@ -2,16 +2,17 @@ package config
 
 import (
 	"fmt"
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/consts"
 	"net/url"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/textinput"
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/config"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils"
 
 	tea "github.com/charmbracelet/bubbletea"
-	config "github.com/spinozanilast/aseprite-assets-cli/pkg/config"
 )
 
 type FldType int
@@ -52,7 +53,7 @@ const (
 	StateCompleted
 )
 
-type model struct {
+type Model struct {
 	state            AppState
 	fields           []*inputField
 	activeFieldIndex int
@@ -124,17 +125,39 @@ var keys = keyMap{
 	),
 }
 
-func InitialModel(config *config.Config) model {
+func (m *Model) FieldsGenerator(assetsType consts.AssetsType) func(folderPaths []string) {
+	var generator func() *inputField
+	switch assetsType {
+	case consts.Sprite:
+		generator = newAssetInputField
+	case consts.Palette:
+		generator = newPalettesInputField
+	}
+
+	return func(folderPaths []string) {
+		for _, path := range folderPaths {
+			inputField := generator()
+			inputField.SetValue(path)
+			m.fields = append(m.fields, inputField)
+		}
+	}
+}
+
+func InitialModel(config *config.Config) Model {
 	model := blankInitialModel()
 
 	if config.AsepritePath != "" {
 		model.fields[AppPathFld].SetValue(config.AsepritePath)
 	}
 
-	for _, path := range config.AssetsFolderPaths {
-		inputField := newAssetInputField()
-		inputField.SetValue(path)
-		model.fields = append(model.fields, inputField)
+	if len(config.AssetsFolderPaths) != 0 {
+		generate := model.FieldsGenerator(consts.Sprite)
+		generate(config.AssetsFolderPaths)
+	}
+
+	if len(config.PalettesFolderPaths) != 0 {
+		generate := model.FieldsGenerator(consts.Sprite)
+		generate(config.AssetsFolderPaths)
 	}
 
 	model.fields[OpenAiKeyFld].SetValue(config.OpenAiConfig.ApiKey)
@@ -145,7 +168,7 @@ func InitialModel(config *config.Config) model {
 	return model
 }
 
-func blankInitialModel() model {
+func blankInitialModel() Model {
 	appPathField := newInputField("Enter Aseprite executable path or press Enter to browse...", "Asseprite Executable Location", AppPathFld)
 	appPathField.Placeholder = "Enter aseprite executable path or tap enter to open file dialog"
 	appPathField.Focus()
@@ -153,7 +176,7 @@ func blankInitialModel() model {
 	h := help.New()
 	h.ShowAll = true
 
-	return model{
+	return Model{
 		state:            StateConfiguring,
 		fields:           []*inputField{appPathField, newInputField("Enter OpenAI API key", "OpenAI API Key", OpenAiKeyFld), newInputField("Enter OpenAI API URL", "OpenAI API URL", OpenAiUrlFld)},
 		activeFieldIndex: 0,
@@ -183,11 +206,11 @@ func newInputField(placeholder string, description string, fldType FldType) *inp
 	}
 }
 
-func (m model) Init() tea.Cmd {
+func (m Model) Init() tea.Cmd {
 	return nil
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if m.quitting {
 		return m, tea.Quit
 	}
@@ -242,19 +265,19 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m.updateCurrentInput(msg)
 }
 
-func (m *model) currentField() *inputField {
+func (m *Model) currentField() *inputField {
 	if m.activeFieldIndex >= 0 && m.activeFieldIndex < len(m.fields) {
 		return m.fields[m.activeFieldIndex]
 	}
 	return nil
 }
 
-func (m *model) validateCurrentInput() {
+func (m *Model) validateCurrentInput() {
 	field := m.currentField()
 	m.validateField(field)
 }
 
-func (m *model) validateField(fld *inputField) {
+func (m *Model) validateField(fld *inputField) {
 	if fld == nil {
 		return
 	}
@@ -285,13 +308,13 @@ func (m *model) validateField(fld *inputField) {
 	}
 }
 
-func (m *model) validateAllFields() {
+func (m *Model) validateAllFields() {
 	for _, field := range m.fields {
 		m.validateField(field)
 	}
 }
 
-func (m *model) handleEnterKey() (tea.Model, tea.Cmd) {
+func (m *Model) handleEnterKey() (tea.Model, tea.Cmd) {
 	current := m.currentField()
 
 	if current == nil {
@@ -309,7 +332,7 @@ func (m *model) handleEnterKey() (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m *model) handleBrowse() (tea.Model, tea.Cmd) {
+func (m *Model) handleBrowse() (tea.Model, tea.Cmd) {
 	current := m.currentField()
 	if current == nil {
 		return m, nil
@@ -335,7 +358,7 @@ func (m *model) handleBrowse() (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) handleAddDirectory(fldType FldType) (tea.Model, tea.Cmd) {
+func (m *Model) handleAddDirectory(fldType FldType) (tea.Model, tea.Cmd) {
 	duplicatesExist, err := m.checkFieldsDuplicatesExist()
 
 	if m.allFieldsValid() && !duplicatesExist {
@@ -354,7 +377,7 @@ func (m model) handleAddDirectory(fldType FldType) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) handleClearInput() (tea.Model, tea.Cmd) {
+func (m *Model) handleClearInput() (tea.Model, tea.Cmd) {
 	currentField := m.currentField()
 
 	isFolderFld := currentField.fldType.IsInTypes(AssetsFolderPathFld, PalettesFolderPathFld)
@@ -369,7 +392,7 @@ func (m model) handleClearInput() (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) updateCurrentInput(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *Model) updateCurrentInput(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	currentField := m.currentField()
 
@@ -384,7 +407,7 @@ func (m model) updateCurrentInput(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m *model) moveFocus(direction Direction) *model {
+func (m *Model) moveFocus(direction Direction) *Model {
 	newFocusIndex := m.activeFieldIndex + int(direction)
 
 	if newFocusIndex < 0 {
@@ -405,7 +428,7 @@ func (m *model) moveFocus(direction Direction) *model {
 	return m
 }
 
-func (m *model) ToConfig() error {
+func (m *Model) ToConfig() error {
 	appPath := m.fields[AppPathFld].Value()
 
 	assetsDirs := make([]string, 0)
@@ -431,7 +454,7 @@ func (m *model) ToConfig() error {
 	return config.SavePaths(appPath, assetsDirs, palettesDirs)
 }
 
-func (m *model) allFieldsValid() bool {
+func (m *Model) allFieldsValid() bool {
 	for _, field := range m.fields {
 		// Open Ai fields are optional
 		isOpenAiFld := field.fldType.IsInTypes(OpenAiKeyFld, OpenAiUrlFld)
@@ -444,7 +467,7 @@ func (m *model) allFieldsValid() bool {
 	return true
 }
 
-func (m *model) removeInput(fldToRemove *inputField) {
+func (m *Model) removeInput(fldToRemove *inputField) {
 	removeIdx := -1
 	for i, field := range m.fields {
 		if field == fldToRemove {
@@ -462,7 +485,7 @@ func (m *model) removeInput(fldToRemove *inputField) {
 	}
 }
 
-func (m *model) checkFieldsDuplicatesExist() (bool, error) {
+func (m *Model) checkFieldsDuplicatesExist() (bool, error) {
 	uniqueDirs := make(map[string]struct{})
 
 	for _, field := range m.fields {
@@ -481,7 +504,7 @@ func (m *model) checkFieldsDuplicatesExist() (bool, error) {
 	return false, nil
 }
 
-func (m *model) clearError() {
+func (m *Model) clearError() {
 	m.err = ""
 }
 
@@ -506,10 +529,10 @@ func (fld *inputField) isEmpty() bool {
 	return fld.Value() == ""
 }
 
-func (f *inputField) Focus() {
-	f.Model.Focus()
+func (fld *inputField) Focus() {
+	fld.Model.Focus()
 }
 
-func (f *inputField) Blur() {
-	f.Model.Blur()
+func (fld *inputField) Blur() {
+	fld.Model.Blur()
 }

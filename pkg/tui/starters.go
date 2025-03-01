@@ -17,7 +17,7 @@ func StartConfigTui(config *config.Config) error {
 	return nil
 }
 
-func StartListTui(title string, executablePath string, sources []list.AssetsSource) error {
+func StartListTui(title string, executablePath string, sources []list.Source) error {
 	p := tea.NewProgram(list.InitialModel(title, executablePath, sources))
 	if _, err := p.Run(); err != nil {
 		return fmt.Errorf("list TUI error: '%s'", err)
