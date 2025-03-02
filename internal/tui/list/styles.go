@@ -1,4 +1,4 @@
-package assets
+package list
 
 import (
 	"github.com/charmbracelet/lipgloss"

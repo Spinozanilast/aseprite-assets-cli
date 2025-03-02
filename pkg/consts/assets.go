@@ -1,8 +1,9 @@
 package consts
 
-type AssetsType int
+type AssetsType string
 
 const (
-	Sprite AssetsType = iota
-	Palette
+	Sprite      AssetsType = "Sprite"
+	Palette     AssetsType = "Palette"
+	UnknownType AssetsType = "Unknown"
 )

@@ -1,4 +1,4 @@
-package assets
+package list
 
 import (
 	"strings"
@@ -7,60 +7,61 @@ import (
 )
 
 func (m Model) View() string {
-	var mainContent strings.Builder
+	var listContent strings.Builder
 
-	// Title section
+	listContent.WriteString(m.renderTitle())
+	listContent.WriteString(m.renderNavigation() + "\n")
+	listContent.WriteString(m.renderList())
+	listContent.WriteString(m.renderError())
+	listContent.WriteString(m.renderHelp())
+
+	return lipgloss.JoinHorizontal(lipgloss.Top,
+		m.styles.App.Render(listContent.String()),
+		m.infoPanel.View(),
+	)
+}
+
+func (m Model) renderTitle() string {
 	title := m.styles.Title.Render(m.title)
-	mainContent.WriteString(lipgloss.PlaceHorizontal(
+	return lipgloss.PlaceHorizontal(
 		m.styles.App.GetWidth(),
 		lipgloss.Center,
 		title,
-	) + "\n")
-
-	// Folders section
-	mainContent.WriteString(m.renderFolderNavigation() + "\n")
-
-	// List section
-	m.list.SetShowTitle(false)
-	mainContent.WriteString(m.list.View() + "\n")
-
-	//Error section
-	if len(m.err) > 0 {
-		mainContent.WriteString(m.styles.ErrorLabel.Render("Error: ") + m.styles.Error.Render(m.err) + "\n")
-	}
-
-	// Help section
-	helpView := m.styles.Help.Render("\n" + m.help.View(m.keys))
-	mainContent.WriteString(helpView)
-
-	return m.styles.App.Render(mainContent.String())
+	) + "\n"
 }
 
-func (m Model) renderFolderNavigation() string {
-	sectionWidth := m.appWidth / 3
-	remainder := m.appWidth % 3
+func (m Model) renderNavigation() string {
+	sectionWidth := m.windowWidth/6 - 1
+	remainder := m.windowWidth % 6
 
-	prevWidth := sectionWidth
-	currentWidth := sectionWidth + remainder
-	nextWidth := sectionWidth
+	return lipgloss.JoinHorizontal(lipgloss.Top,
+		m.renderFolderSection(sectionWidth, m.nav.prev, lipgloss.Left),
+		m.renderFolderSection(sectionWidth+remainder, "<-- "+m.nav.active+" -->", lipgloss.Center),
+		m.renderFolderSection(sectionWidth, m.nav.next, lipgloss.Right),
+	)
+}
 
-	prevSection := m.styles.BeforeAfterFolders.
-		Width(prevWidth).
-		MaxWidth(prevWidth).
-		Align(lipgloss.Left).
-		Render(m.prevFolderName)
+func (m Model) renderFolderSection(width int, content string, align lipgloss.Position) string {
+	return m.styles.BeforeAfterFolders.
+		Width(width).
+		MaxWidth(width).
+		Align(align).
+		Render(content)
+}
 
-	currentSection := m.styles.CurrentFolder.
-		Width(currentWidth).
-		MaxWidth(currentWidth).
-		Align(lipgloss.Center).
-		Render("<-- " + m.activeFolderName + " -->")
+func (m Model) renderList() string {
+	m.list.SetShowTitle(false)
+	return m.list.View() + "\n"
+}
 
-	nextSection := m.styles.BeforeAfterFolders.
-		Width(nextWidth).
-		MaxWidth(nextWidth).
-		Align(lipgloss.Right).
-		Render(m.nextFolderName)
+func (m Model) renderError() string {
+	if len(m.err) > 0 {
+		return m.styles.ErrorLabel.Render("Error: ") +
+			m.styles.Error.Render(m.err) + "\n"
+	}
+	return ""
+}
 
-	return lipgloss.JoinHorizontal(lipgloss.Top, prevSection, currentSection, nextSection)
+func (m Model) renderHelp() string {
+	return m.styles.Help.Render("\n" + m.help.View(m.keys))
 }

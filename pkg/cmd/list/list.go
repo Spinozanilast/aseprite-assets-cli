@@ -5,6 +5,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/aseprite"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/config"
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/consts"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/environment"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/tui"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils"
@@ -33,6 +34,7 @@ type listHandler struct {
 	listType   ListType
 	extensions []string
 	folders    []string
+	assetsType consts.AssetsType
 }
 
 func NewListCmd(env *environment.Environment) *cobra.Command {
@@ -81,8 +83,15 @@ func runList(opts *ListOptions) error {
 		return err
 	}
 
-	if err = tui.StartListTui(WriteTitle(handler.listType), cfg.AsepritePath, sources); err != nil {
+	listParams := list.ListParams{
+		Title:         WriteTitle(handler.listType),
+		AppPath:       cfg.AsepritePath,
+		AssetsType:    handler.assetsType,
+		AssetsFolders: sources,
+	}
 
+	if err = tui.StartListTui(listParams); err != nil {
+		return err
 	}
 
 	return nil
@@ -116,9 +125,11 @@ func (h *listHandler) specifyListParameters() error {
 	case h.listType&SpritesList != 0:
 		h.folders = h.config.AssetsFolderPaths
 		h.extensions = aseprite.SpritesExtensions()
+		h.assetsType = consts.Sprite
 	case h.listType&PalettesList != 0:
 		h.folders = h.config.PalettesFolderPaths
 		h.extensions = aseprite.PaletteExtensions()
+		h.assetsType = consts.Palette
 	default:
 		return fmt.Errorf("invalid list type configuration")
 	}
@@ -130,7 +141,7 @@ func (h *listHandler) specifyListParameters() error {
 	return nil
 }
 
-func (h *listHandler) findSources() ([]list.Source, error) {
+func (h *listHandler) findSources() ([]list.AssetSource, error) {
 	// if recursive flag was added
 	if h.listType&RecursiveList != 0 {
 		return h.findSourcesRecursive()
@@ -139,8 +150,8 @@ func (h *listHandler) findSources() ([]list.Source, error) {
 }
 
 // findSourcesRecursive finds assets recursively (watching inner folders for files)
-func (h *listHandler) findSourcesRecursive() ([]list.Source, error) {
-	var sources []list.Source
+func (h *listHandler) findSourcesRecursive() ([]list.AssetSource, error) {
+	var sources []list.AssetSource
 
 	for _, dir := range h.folders {
 		if !utils.СheckFileExists(dir, true) {
@@ -161,8 +172,8 @@ func (h *listHandler) findSourcesRecursive() ([]list.Source, error) {
 }
 
 // findSourcesRecursive finds assets recursively (don't watching inner folders)
-func (h *listHandler) findFlatSources() ([]list.Source, error) {
-	var sources []list.Source
+func (h *listHandler) findFlatSources() ([]list.AssetSource, error) {
+	var sources []list.AssetSource
 
 	for _, dir := range h.folders {
 		if !utils.СheckFileExists(dir, true) {
