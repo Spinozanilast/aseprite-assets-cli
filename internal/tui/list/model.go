@@ -1,14 +1,15 @@
 package list
 
 import (
+	"path/filepath"
+
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/spinozanilast/aseprite-assets-cli/internal/tui/info"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/consts"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils"
-	"path/filepath"
-
+	
 	tea "github.com/charmbracelet/bubbletea"
 )
 

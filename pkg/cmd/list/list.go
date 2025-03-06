@@ -2,15 +2,15 @@ package list
 
 import (
 	"fmt"
+
 	"github.com/spf13/cobra"
+	"github.com/spinozanilast/aseprite-assets-cli/internal/tui/list"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/aseprite"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/config"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/consts"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/environment"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/tui"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils"
-
-	list "github.com/spinozanilast/aseprite-assets-cli/internal/tui/list"
 )
 
 type ListType int

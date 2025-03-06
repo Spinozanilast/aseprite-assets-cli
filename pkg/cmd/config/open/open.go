@@ -2,10 +2,10 @@ package open
 
 import (
 	"fmt"
-	"github.com/spinozanilast/aseprite-assets-cli/pkg/environment"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/environment"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils"
 )
 

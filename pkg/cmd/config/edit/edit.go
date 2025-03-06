@@ -2,13 +2,13 @@ package edit
 
 import (
 	"fmt"
-	"github.com/MakeNowJust/heredoc/v2"
-	"github.com/spinozanilast/aseprite-assets-cli/pkg/environment"
-	"github.com/spinozanilast/aseprite-assets-cli/pkg/tui"
 	"os"
 
+	"github.com/MakeNowJust/heredoc/v2"
 	"github.com/spf13/cobra"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/config"
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/environment"
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/tui"
 )
 
 func NewConfigEditCmd(env *environment.Environment) *cobra.Command {

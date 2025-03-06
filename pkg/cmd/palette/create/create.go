@@ -15,14 +15,13 @@ import (
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/sashabaranov/go-openai"
 	"github.com/spf13/cobra"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/aseprite"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/aseprite/commands"
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/config"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/environment"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils"
-
-	"github.com/sashabaranov/go-openai"
-	"github.com/spinozanilast/aseprite-assets-cli/pkg/config"
 )
 
 type paletteHandler struct {

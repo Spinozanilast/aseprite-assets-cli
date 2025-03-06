@@ -2,6 +2,7 @@ package root
 
 import (
 	"fmt"
+
 	"github.com/spf13/cobra"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/cmd/config"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/cmd/config/open"

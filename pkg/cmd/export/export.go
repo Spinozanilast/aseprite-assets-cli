@@ -3,7 +3,6 @@ package export
 import (
 	"errors"
 	"fmt"
-	"github.com/spinozanilast/aseprite-assets-cli/pkg/environment"
 	"log"
 	"slices"
 	"strconv"
@@ -15,6 +14,7 @@ import (
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/aseprite"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/aseprite/commands"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/config"
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/environment"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils"
 )
 
