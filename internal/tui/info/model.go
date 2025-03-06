@@ -66,13 +66,15 @@ func (m *Model) UpdateAssetInfo(assetPath string, assetType consts.AssetsType) {
 		Type:      assetType,
 	}
 
-	preview, err := assetInfo.GeneratePreview(m.cli)
-	if err != nil {
-		assetInfo.Preview = fmt.Sprintf("error generating preview for asset: %v", err)
-	} else {
-		assetInfo.Preview = preview
-	}
+	if m.Width != 0 {
+		preview, err := assetInfo.GeneratePreview(m.cli, (m.Width-2)/4)
+		if err != nil {
+			assetInfo.Preview = fmt.Sprintf("error generating preview for asset: %v", err)
+		} else {
+			assetInfo.Preview = preview
+		}
 
+	}
 	m.AssetInfo = assetInfo
 
 	m.Error = ""

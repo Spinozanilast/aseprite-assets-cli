@@ -5,6 +5,7 @@ import "github.com/spinozanilast/aseprite-assets-cli/pkg/aseprite"
 type ShowSprite struct {
 	BatchMode      bool
 	SpriteFilename string `script:"sprite-filename" format:"quotes"`
+	SpriteSize     int    `script:"size"`
 }
 
 func (a *ShowSprite) ScriptName() string {

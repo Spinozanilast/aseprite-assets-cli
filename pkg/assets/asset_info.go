@@ -18,10 +18,10 @@ type AssetInfo struct {
 	Type      consts.AssetsType
 }
 
-func (info *AssetInfo) GeneratePreview(cli *aseprite.AsepriteCLI) (string, error) {
+func (info *AssetInfo) GeneratePreview(cli *aseprite.AsepriteCLI, size int) (string, error) {
 	params := preview.GenerateParams{
-		Filename:         info.Path,
-		IsPalettePreview: true,
+		Filename: info.Path,
+		Size:     size,
 	}
 
 	generator := preview.NewGenerator(cli)

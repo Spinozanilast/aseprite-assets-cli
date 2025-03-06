@@ -2,6 +2,7 @@ package preview
 
 import (
 	"fmt"
+
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/aseprite"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/aseprite/commands"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils"
@@ -24,6 +25,7 @@ type GenerateParams struct {
 	ColorFormat      string
 	ColorsPerRow     int
 	IsPalettePreview bool
+	Size             int
 }
 
 func (g *Generator) Generate(params GenerateParams) (string, error) {
@@ -52,6 +54,7 @@ func (g *Generator) createSpriteCommand(params GenerateParams) *commands.ShowSpr
 	return &commands.ShowSprite{
 		BatchMode:      true,
 		SpriteFilename: params.Filename,
+		SpriteSize:     params.Size,
 	}
 }
 

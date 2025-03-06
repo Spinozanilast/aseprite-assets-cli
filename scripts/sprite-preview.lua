@@ -1,4 +1,5 @@
 local aseprite_filename = app.params["sprite-filename"]
+local size = tonumber(app.params["size"] or 0)
 
 local function colorize(text, r, g, b)
     return string.format("\27[38;2;%d;%d;%dm%s\27[0m", r, g, b, text)
@@ -17,6 +18,13 @@ local function make_color_block(r, g, b, a)
 end
 
 local sprite = Sprite { fromFile = aseprite_filename }
+
+if (size ~= 0) then
+    local resizedSprite = Sprite(sprite)
+    resizedSprite:resize(size, size)
+    sprite = resizedSprite
+end
+
 local image = Image(sprite)
 
 if image:isEmpty() then
@@ -26,7 +34,11 @@ end
 local w = image.width
 local h = image.height
 
-print(colorize(string.format("Sprite Preview (%dx%d):\n\n", w, h), 50, 200, 255)) -- Cyan
+if size ~= 0 then
+    print(colorize(string.format("Sprite Preview (compressed a lot: %dx%d) :\n\n", size, size), 200, 100, 100))
+else
+    print(colorize(string.format("Sprite Preview (%dx%d) :\n\n", w, h), 50, 200, 255))
+end
 
 local output = {}
 for y = 0, h - 1 do
@@ -45,5 +57,7 @@ end
 
 print(table.concat(output, "\n") .. "\n\n")
 
-print(colorize("[TIP]: ", 255, 200, 0))                                 -- Yellow
-print(colorize("Zoom out terminal for large sprites\n", 150, 150, 150)) -- Grey
+if size == 0 then
+    print(colorize("[TIP]: ", 255, 200, 0))                                 -- Yellow
+    print(colorize("Zoom out terminal for large sprites\n", 150, 150, 150)) -- Grey
+end

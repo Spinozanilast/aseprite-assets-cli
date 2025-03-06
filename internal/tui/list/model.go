@@ -139,7 +139,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	cmds = append(cmds, cmd)
 
 	m.infoPanel.UpdateAssetInfo(m.currentItemFilename(), m.assetsType)
-	
+
 	return m, tea.Batch(cmds...)
 }
 
