@@ -34,6 +34,7 @@ func NewAssetsSource(folderPath string, assetsNames []string) AssetSource {
 type ListParams struct {
 	Title         string
 	AppPath       string
+	ScriptsPath   string
 	AssetsFolders []AssetSource
 	AssetsType    consts.AssetsType
 }

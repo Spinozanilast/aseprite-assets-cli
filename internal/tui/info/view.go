@@ -35,6 +35,7 @@ func (m Model) renderAssetInfo() string {
 	sb.WriteString("\n\n")
 	sb.WriteString(m.renderMetadata())
 	sb.WriteString(m.renderPath())
+	sb.WriteString(m.renderPreview())
 
 	return sb.String()
 }
@@ -50,6 +51,13 @@ func (m Model) renderMetadata() string {
 		m.renderField("Extension:", m.AssetInfo.Extension),
 		m.renderField("Modified:", m.AssetInfo.ModTime.Format(dateFormat)),
 	}, "\n") + "\n"
+}
+
+func (m Model) renderPreview() string {
+	return fmt.Sprintf("\n%s\n%s",
+		m.Styles.Label.Render("Preview:"),
+		m.Styles.Value.Render(m.AssetInfo.Preview),
+	)
 }
 
 func (m Model) renderField(label, value string) string {

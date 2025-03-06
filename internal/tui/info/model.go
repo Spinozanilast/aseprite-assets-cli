@@ -1,6 +1,8 @@
 package info
 
 import (
+	"fmt"
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/aseprite"
 	"os"
 
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/assets"
@@ -12,15 +14,17 @@ import (
 
 type Model struct {
 	AssetInfo *assets.AssetInfo
+	cli       *aseprite.AsepriteCLI
 	Styles    *Styles
 	Width     int
 	Height    int
 	Error     string
 }
 
-func NewInfoModel() Model {
+func NewInfoModel(cli *aseprite.AsepriteCLI) Model {
 	return Model{
 		AssetInfo: &assets.AssetInfo{},
+		cli:       cli,
 		Styles:    DefaultStyles(),
 	}
 }
@@ -52,7 +56,8 @@ func (m *Model) UpdateAssetInfo(assetPath string, assetType consts.AssetsType) {
 	}
 
 	ext := utils.GetFileExtension(assetPath)
-	m.AssetInfo = &assets.AssetInfo{
+
+	assetInfo := &assets.AssetInfo{
 		Name:      info.Name(),
 		Path:      assetPath,
 		Size:      info.Size(),
@@ -60,6 +65,15 @@ func (m *Model) UpdateAssetInfo(assetPath string, assetType consts.AssetsType) {
 		Extension: ext,
 		Type:      assetType,
 	}
+
+	preview, err := assetInfo.GeneratePreview(m.cli)
+	if err != nil {
+		assetInfo.Preview = fmt.Sprintf("error generating preview for asset: %v", err)
+	} else {
+		assetInfo.Preview = preview
+	}
+
+	m.AssetInfo = assetInfo
 
 	m.Error = ""
 }

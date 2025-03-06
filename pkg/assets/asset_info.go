@@ -1,8 +1,11 @@
 package assets
 
 import (
-	"github.com/spinozanilast/aseprite-assets-cli/pkg/consts"
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/aseprite"
 	"time"
+
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/aseprite/preview"
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/consts"
 )
 
 type AssetInfo struct {
@@ -15,6 +18,17 @@ type AssetInfo struct {
 	Type      consts.AssetsType
 }
 
-func (info *AssetInfo) GeneratePreview() string {
-	panic("unimplemented")
+func (info *AssetInfo) GeneratePreview(cli *aseprite.AsepriteCLI) (string, error) {
+	params := preview.GenerateParams{
+		Filename:         info.Path,
+		IsPalettePreview: true,
+	}
+
+	generator := preview.NewGenerator(cli)
+
+	if output, err := generator.Generate(params); err != nil {
+		return "", err
+	} else {
+		return output, nil
+	}
 }

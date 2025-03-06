@@ -9,17 +9,19 @@ local function make_color_block(r, g, b, a)
         return "  " -- Two spaces for transparent pixels
     end
     return string.format(
-        "\27[48;2;%d;%d;%dm  \27[0m",
-        math.floor(r * (a / 255)),
-        math.floor(g * (a / 255)),
-        math.floor(b * (a / 255))
+            "\27[48;2;%d;%d;%dm  \27[0m",
+            math.floor(r * (a / 255)),
+            math.floor(g * (a / 255)),
+            math.floor(b * (a / 255))
     )
 end
 
 local sprite = Sprite { fromFile = aseprite_filename }
 local image = Image(sprite)
 
-if image:isEmpty() then return end
+if image:isEmpty() then
+    return
+end
 
 local w = image.width
 local h = image.height

@@ -86,6 +86,7 @@ func runList(opts *ListOptions) error {
 	listParams := list.ListParams{
 		Title:         WriteTitle(handler.listType),
 		AppPath:       cfg.AsepritePath,
+		ScriptsPath:   cfg.ScriptDirPath,
 		AssetsType:    handler.assetsType,
 		AssetsFolders: sources,
 	}

@@ -1,6 +1,7 @@
 package list
 
 import (
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/aseprite"
 	"path/filepath"
 
 	"github.com/charmbracelet/bubbles/help"
@@ -9,7 +10,7 @@ import (
 	"github.com/spinozanilast/aseprite-assets-cli/internal/tui/info"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/consts"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils"
-	
+
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -26,9 +27,10 @@ type Model struct {
 	help      help.Model
 
 	assetsType    consts.AssetsType
-	appPath       string
 	assetsFolders []AssetSource
 	assetsActive  []int
+
+	asepriteCli *aseprite.AsepriteCLI
 
 	nav folderNavigation
 
@@ -54,14 +56,17 @@ func NewModel(p ListParams) Model {
 
 	listLayoutStyles := DefaultListLayoutStyles()
 	listModel := list.New(items, itemDelegate{}, listLayoutStyles.ListWidth, listLayoutStyles.ListHeight)
-	infoModel := info.NewInfoModel()
+
+	cli := aseprite.NewCLI(p.AppPath, p.ScriptsPath)
+	infoModel := info.NewInfoModel(cli)
+
 	infoModel.UpdateAssetInfo(filepath.Join(nav.active, p.AssetsFolders[0].GetAssetsNames()[0]), p.AssetsType)
 
 	return Model{
 		list:          listModel,
 		infoPanel:     infoModel,
 		nav:           nav,
-		appPath:       p.AppPath,
+		asepriteCli:   cli,
 		assetsFolders: p.AssetsFolders,
 		assetsActive:  assetsActive,
 		assetsType:    p.AssetsType,
@@ -129,17 +134,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 
-	m.infoPanel.UpdateAssetInfo(m.currentItemFilename(), m.assetsType)
-
 	newListModel, cmd := m.list.Update(msg)
 	m.list = newListModel
 	cmds = append(cmds, cmd)
 
+	m.infoPanel.UpdateAssetInfo(m.currentItemFilename(), m.assetsType)
+	
 	return m, tea.Batch(cmds...)
 }
 
 func (m *Model) handleEnterKey() (tea.Model, tea.Cmd) {
-	utils.OpenFileWith(m.currentItemFilename(), m.appPath)
+	utils.OpenFileWith(m.currentItemFilename(), m.asepriteCli.AsepritePath)
 	return m, nil
 }
 

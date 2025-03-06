@@ -1,6 +1,10 @@
 local palette_filename = app.params["palette-filename"]
 local color_output_type = app.params["color-format"]
-local line_elements_count = tonumber(app.params["output-row-count"]) or 5
+local line_elements_count = tonumber(app.params["output-row-count"])
+
+if line_elements_count < 1 then
+    line_elements_count = 5
+end
 
 local function colorize(text, r, g, b)
     return string.format("\27[38;2;%d;%d;%dm%s\27[0m", r, g, b, text)
@@ -29,11 +33,11 @@ local function make_hex_color_block(r, g, b, a)
     color_s = colorize(color_s, 30, 35, 32)
 
     return string.format(
-        "\27[48;2;%d;%d;%dm %s \27",
-        math.floor(r * (a / 255)),
-        math.floor(g * (a / 255)),
-        math.floor(b * (a / 255)),
-        color_s
+            "\27[48;2;%d;%d;%dm %s \27",
+            math.floor(r * (a / 255)),
+            math.floor(g * (a / 255)),
+            math.floor(b * (a / 255)),
+            color_s
     )
 end
 
@@ -52,7 +56,9 @@ for i = 0, n_colors - 1, line_elements_count do
     local line = {}
     for j = 0, line_elements_count - 1 do
         local index = i + j
-        if index >= n_colors then break end
+        if index >= n_colors then
+            break
+        end
 
         local color = palette:getColor(index)
         local r = color.red
