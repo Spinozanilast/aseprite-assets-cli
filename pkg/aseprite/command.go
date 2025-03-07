@@ -7,6 +7,7 @@ import (
 )
 
 const AsepriteScriptParamArg = "--script-param"
+const BatchModeProperty = "BatchMode"
 
 type Command interface {
 	Args() []string
@@ -14,9 +15,13 @@ type Command interface {
 }
 
 func CreateArgsFromStruct(s interface{}) []string {
-	args := []string{}
+	var args []string
 	v := reflect.ValueOf(s).Elem()
 	t := v.Type()
+
+	if !v.FieldByName(BatchModeProperty).IsValid() {
+		args = append(args, "-b")
+	}
 
 	for i := 0; i < v.NumField(); i++ {
 		field := v.Field(i)
@@ -30,7 +35,7 @@ func CreateArgsFromStruct(s interface{}) []string {
 			continue
 		}
 
-		if fieldType.Name == "BatchMode" {
+		if fieldType.Name == BatchModeProperty {
 			isBatchModeCmd := field.Interface()
 			if (isBatchModeCmd).(bool) {
 				args = append(args, "-b")

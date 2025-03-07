@@ -52,7 +52,6 @@ func (g *Generator) Generate(params GenerateParams) (string, error) {
 
 func (g *Generator) createSpriteCommand(params GenerateParams) *commands.ShowSprite {
 	return &commands.ShowSprite{
-		BatchMode:      true,
 		SpriteFilename: params.Filename,
 		SpriteSize:     params.Size,
 	}
@@ -60,7 +59,6 @@ func (g *Generator) createSpriteCommand(params GenerateParams) *commands.ShowSpr
 
 func (g *Generator) createPaletteCommand(params GenerateParams) *commands.ShowPalette {
 	return &commands.ShowPalette{
-		BatchMode:       true,
 		PaletteFilename: params.Filename,
 		OutputRowCount:  params.ColorsPerRow,
 		ColorFormat:     params.ColorFormat,

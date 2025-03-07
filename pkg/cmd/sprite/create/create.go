@@ -15,17 +15,18 @@ import (
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/config"
 )
 
-type AssetCreateOptions struct {
-	AssetName  string `survey:"name"`
-	Ui         bool
-	Width      int
-	Height     int
-	ColorMode  string `survey:"mode"`
-	OutputPath string `survey:"path"`
+type SpriteCreateOptions struct {
+	AssetName         string `survey:"name"`
+	OpenAfterCreation bool   `survey:"ui"`
+	Width             int
+	Height            int
+	ColorMode         string `survey:"mode"`
+	OutputPath        string `survey:"path"`
 }
 
-type assetHandler struct {
-	config *config.Config
+type spriteCreationHandler struct {
+	config         *config.Config
+	outputFilename string
 }
 
 func NewSpriteCreateCmd(env *environment.Environment) *cobra.Command {
@@ -39,7 +40,7 @@ func NewSpriteCreateCmd(env *environment.Environment) *cobra.Command {
 				return err
 			}
 
-			h := &assetHandler{
+			h := &spriteCreationHandler{
 				config: cfg,
 			}
 
@@ -53,14 +54,20 @@ func NewSpriteCreateCmd(env *environment.Environment) *cobra.Command {
 				return err
 			}
 
+			if utils.СheckFileExists(h.outputFilename, false) {
+				showSummary(opts)
+			} else {
+				showFailure()
+			}
+
 			return nil
 		}}
 	return cmd
 }
 
-func (h *assetHandler) createAsset(opts *AssetCreateOptions) error {
-	asepriteCli := aseprite.NewCLI(h.config.AsepritePath, h.config.ScriptDirPath)
-	err := asepriteCli.CheckPrerequisites()
+func (h *spriteCreationHandler) createAsset(opts *SpriteCreateOptions) error {
+	aseCli := aseprite.NewCLI(h.config.AsepritePath, h.config.ScriptDirPath)
+	err := aseCli.CheckPrerequisites()
 	if err != nil {
 		return err
 	}
@@ -71,19 +78,25 @@ func (h *assetHandler) createAsset(opts *AssetCreateOptions) error {
 		return fmt.Errorf("file already exists: %s", filename)
 	}
 
-	err = asepriteCli.ExecuteCommand(&commands.AssetCreate{
-		BatchMode:  !opts.Ui,
-		Width:      opts.Width,
-		Height:     opts.Height,
-		ColorMode:  opts.ColorMode,
-		OutputPath: filename,
-	})
+	aseCommand := &commands.CreateSprite{
+		OpenAfterCreation: opts.OpenAfterCreation,
+		Width:             opts.Width,
+		Height:            opts.Height,
+		ColorMode:         opts.ColorMode,
+		OutputPath:        filename,
+	}
+
+	err = aseCli.ExecuteCommand(aseCommand)
+
+	// Callback that opens or not file after creation
+	openingCallback := aseCommand.ScriptCallback(h.config.AsepritePath)
+	openingCallback()
+
+	h.outputFilename = filename
 
 	if err != nil {
 		return err
 	}
-
-	showSummary(opts)
 
 	return nil
 }
@@ -138,8 +151,8 @@ func createAssetQuestions(dirs []string) []*survey.Question {
 	return questions
 }
 
-func (h *assetHandler) collectCreateOptions() (*AssetCreateOptions, error) {
-	opts := &AssetCreateOptions{}
+func (h *spriteCreationHandler) collectCreateOptions() (*SpriteCreateOptions, error) {
+	opts := &SpriteCreateOptions{}
 	err := survey.Ask(createAssetQuestions(h.config.AssetsFolderPaths), opts)
 
 	if err != nil {
@@ -149,13 +162,17 @@ func (h *assetHandler) collectCreateOptions() (*AssetCreateOptions, error) {
 	return opts, nil
 }
 
-func showSummary(opts *AssetCreateOptions) {
+func showSummary(opts *SpriteCreateOptions) {
 	utils.PrintlnBold("\nAsset configuration summary:\n")
 	fmt.Printf("Name: %v\n", opts.AssetName)
-	fmt.Printf("UI: %v\n", opts.Ui)
+	fmt.Printf("UI: %v\n", opts.OpenAfterCreation)
 	fmt.Printf("Width: %v\n", opts.Width)
 	fmt.Printf("Height: %v\n", opts.Height)
 	fmt.Printf("Color mode: %v\n", opts.ColorMode)
 	fmt.Printf("Output path: %v\n", opts.OutputPath)
 	utils.PrintlnSuccess("✓ Asset created successfully")
+}
+
+func showFailure() {
+	utils.PrintError("❌ Asset creation is failed")
 }

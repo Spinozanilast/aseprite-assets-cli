@@ -354,7 +354,6 @@ func (h *paletteHandler) savePalette(outputOpts *OutputOptions, paletteOpts *Pal
 		asepriteCli := aseprite.NewCLI(h.config.AsepritePath, h.config.ScriptDirPath)
 
 		err := asepriteCli.ExecuteCommand(&commands.SavePalette{
-			BatchMode:       true,
 			PresetName:      outputOpts.PresetName,
 			PaletteFilename: outputPath,
 		})

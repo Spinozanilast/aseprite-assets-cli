@@ -3,7 +3,6 @@ package commands
 import "github.com/spinozanilast/aseprite-assets-cli/pkg/aseprite"
 
 type SavePalette struct {
-	BatchMode       bool
 	PresetName      string `script:"preset-name" format:"quotes"`
 	PaletteFilename string `script:"palette-filename"`
 }
