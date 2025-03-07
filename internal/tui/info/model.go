@@ -2,9 +2,9 @@ package info
 
 import (
 	"fmt"
-	"github.com/spinozanilast/aseprite-assets-cli/pkg/aseprite"
 	"os"
 
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/aseprite"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/assets"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/consts"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils"
@@ -66,16 +66,23 @@ func (m *Model) UpdateAssetInfo(assetPath string, assetType consts.AssetsType) {
 		Type:      assetType,
 	}
 
-	if m.Width != 0 {
-		preview, err := assetInfo.GeneratePreview(m.cli, (m.Width-2)/4)
-		if err != nil {
-			assetInfo.Preview = fmt.Sprintf("error generating preview for asset: %v", err)
-		} else {
-			assetInfo.Preview = preview
-		}
+	previewChan := make(chan string)
 
-	}
+	go func() {
+		var output string
+		if m.Width != 0 {
+			preview, err := assetInfo.GeneratePreview(m.cli, m.Width-4)
+			if err != nil {
+				output = fmt.Sprintf("error generating preview for asset: %v", err)
+			} else {
+				output = preview
+			}
+		}
+		previewChan <- output
+	}()
+
 	m.AssetInfo = assetInfo
+	m.AssetInfo.Preview = <-previewChan
 
 	m.Error = ""
 }

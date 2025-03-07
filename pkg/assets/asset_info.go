@@ -20,8 +20,9 @@ type AssetInfo struct {
 
 func (info *AssetInfo) GeneratePreview(cli *aseprite.AsepriteCLI, size int) (string, error) {
 	params := preview.GenerateParams{
-		Filename: info.Path,
-		Size:     size,
+		Filename:     info.Path,
+		ColorsPerRow: (size - 11) / 11,
+		Size:         size / 4,
 	}
 
 	generator := preview.NewGenerator(cli)

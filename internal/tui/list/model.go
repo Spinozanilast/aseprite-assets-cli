@@ -60,8 +60,6 @@ func NewModel(p ListParams) Model {
 	cli := aseprite.NewCLI(p.AppPath, p.ScriptsPath)
 	infoModel := info.NewInfoModel(cli)
 
-	infoModel.UpdateAssetInfo(filepath.Join(nav.active, p.AssetsFolders[0].GetAssetsNames()[0]), p.AssetsType)
-
 	return Model{
 		list:          listModel,
 		infoPanel:     infoModel,
@@ -138,7 +136,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	m.list = newListModel
 	cmds = append(cmds, cmd)
 
-	m.infoPanel.UpdateAssetInfo(m.currentItemFilename(), m.assetsType)
+	m.updateItemInfo()
 
 	return m, tea.Batch(cmds...)
 }
@@ -153,6 +151,8 @@ func (m *Model) handleResize(msg tea.WindowSizeMsg) (Model, tea.Cmd) {
 
 	m.list.SetWidth(msg.Width / 2)
 	m.infoPanel.Width = msg.Width / 2
+
+	m.updateItemInfo()
 	return *m, nil
 }
 
@@ -175,7 +175,7 @@ func (m *Model) changeFolderFocus(direction Direction) *Model {
 	m.nav.activeIdx = (activeIdx + int(direction) + total) % total
 	m.updateFoldersNavigation()
 	m.updateListContent()
-	m.infoPanel.UpdateAssetInfo(m.currentItemFilename(), m.assetsType)
+	m.updateItemInfo()
 	return m
 }
 
@@ -196,6 +196,10 @@ func (m *Model) updateFoldersNavigation() {
 	m.nav.prev = m.assetsFolders[prevIndex].GetFolderPath()
 	m.nav.active = m.assetsFolders[activeIdx].GetFolderPath()
 	m.nav.next = m.assetsFolders[nextIndex].GetFolderPath()
+}
+
+func (m *Model) updateItemInfo() {
+	m.infoPanel.UpdateAssetInfo(m.currentItemFilename(), m.assetsType)
 }
 
 func (m *Model) currentItemFilename() string {

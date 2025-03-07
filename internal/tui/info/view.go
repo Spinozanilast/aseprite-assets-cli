@@ -54,8 +54,7 @@ func (m Model) renderMetadata() string {
 }
 
 func (m Model) renderPreview() string {
-	return fmt.Sprintf("\n%s\n%s",
-		m.Styles.Label.Render("Preview:"),
+	return fmt.Sprintf("\n%s",
 		m.Styles.Value.Render(m.AssetInfo.Preview),
 	)
 }

@@ -18,7 +18,7 @@ func StartConfigTui(config *config.Config) error {
 }
 
 func StartListTui(params list.ListParams) error {
-	p := tea.NewProgram(list.NewModel(params))
+	p := tea.NewProgram(list.NewModel(params), tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {
 		return fmt.Errorf("list TUI error: '%s'", err)
 	}
