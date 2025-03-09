@@ -3,6 +3,7 @@ package sprite
 import (
 	"github.com/spf13/cobra"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/cmd/sprite/create"
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/cmd/sprite/open"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/environment"
 )
 
@@ -13,10 +14,12 @@ func NewSpriteCmd(env *environment.Environment) *cobra.Command {
 		Short:   "Sprite commands to manage sprites",
 		Long: `
 Subcommands allow you to:
-- Create sprite (create)`,
+- Create sprite (create)
+- Open sprite (open)`,
 	}
 
 	cmd.AddCommand(create.NewSpriteCreateCmd(env))
+	cmd.AddCommand(open.NewSpriteOpenCmd(env))
 
 	return cmd
 }

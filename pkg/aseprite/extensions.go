@@ -1,7 +1,7 @@
 package aseprite
 
 type PaletteExtension string
-type AssetExtension string
+type SpriteExtension string
 
 const (
 	GPL PaletteExtension = ".gpl"
@@ -9,15 +9,15 @@ const (
 )
 
 const (
-	Aseprite AssetExtension = ".aseprite"
-	Ase      AssetExtension = ".ase"
+	Aseprite SpriteExtension = ".aseprite"
+	Ase      SpriteExtension = ".ase"
 )
 
 func (f PaletteExtension) String() string {
 	return string(f)
 }
 
-func (f AssetExtension) String() string {
+func (f SpriteExtension) String() string {
 	return string(f)
 }
 

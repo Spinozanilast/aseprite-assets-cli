@@ -37,8 +37,8 @@ func OpenFile(path string) error {
 	return nil
 }
 
-func OpenFileWith(path string, appname string) error {
-	err := open.StartWith(path, appname)
+func OpenFileWith(path string, appExe string) error {
+	err := open.StartWith(path, appExe)
 	if err != nil {
 		return err
 	}

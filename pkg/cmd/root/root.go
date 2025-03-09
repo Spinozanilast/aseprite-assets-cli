@@ -2,13 +2,13 @@ package root
 
 import (
 	"fmt"
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/cmd/palette"
 
 	"github.com/spf13/cobra"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/cmd/config"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/cmd/config/open"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/cmd/export"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/cmd/list"
-	"github.com/spinozanilast/aseprite-assets-cli/pkg/cmd/palette/create"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/cmd/scripts"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/cmd/show"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/cmd/sprite"
@@ -48,7 +48,7 @@ CLI interface for aseprite assets interaction. For in-terminal opening of asepri
 		export.NewExportCmd(env),
 		list.NewListCmd(env),
 		open.NewConfigOpenCmd(env),
-		create.NewPaletteCreateCmd(env),
+		palette.NewPaletteCmd(env),
 		scripts.NewScriptsCmd(env),
 		show.NewShowCmd(env),
 	)
