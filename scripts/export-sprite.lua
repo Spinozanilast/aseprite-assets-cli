@@ -42,7 +42,9 @@ local function validate_parameters()
 end
 
 local function parse_comma_list(input, validator)
-    if not input then return nil end
+    if not input then
+        return nil
+    end
     local items = {}
 
     for item in string.gmatch(input, "([^,]+)") do
@@ -60,7 +62,9 @@ local function generate_output_path(base_path, suffix, ext, separator)
     local pattern = "(.-)(%..+)$"
     local name, extension = string.match(base_path, pattern)
 
-    if not separator then separator = "_" end
+    if not separator then
+        separator = "_"
+    end
 
     if not name then
         name = base_path
@@ -82,9 +86,9 @@ local function save_scaled_versions(sprite, base_path, scales)
         end
 
         local output_path = generate_output_path(
-            base_path,
-            string.format("%dx", numeric_scale),
-            format
+                base_path,
+                string.format("%dx", numeric_scale),
+                format
         )
 
         print(output_path)
@@ -114,9 +118,9 @@ local function save_sized_versions(sprite, base_path, sizes)
         resized_sprite:resize(width, height)
 
         local output_path = generate_output_path(
-            base_path,
-            string.format("%dx%d", width, height),
-            format
+                base_path,
+                string.format("%dx%d", width, height),
+                format
         )
 
         print(output_path)
@@ -136,7 +140,7 @@ local function main()
     end
 
     local base_output = output_filename or
-        generate_output_path(sprite_filename, "", format, "")
+            generate_output_path(sprite_filename, "", format, "")
 
     if not sizes and not scales then
         app.command.SaveFileCopyAs {
@@ -160,8 +164,6 @@ local function main()
 
     sprite:close()
 end
-
-
 
 local function error_handler(error)
     app.alert {

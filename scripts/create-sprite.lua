@@ -1,23 +1,42 @@
-local sprite_width = tonumber(app.params["width"]) or 32
-local sprite_height = tonumber(app.params["height"]) or 32
-local color_mode = app.params["color-mode"]
-local output_path = app.params["output-path"]
+--[[
+Aseprite Create sprite script
+======================
+Creates sprite with specified dimensions and color mode.
 
-local color_modes = {
+Features:
+- Supports custom sprite dimensions
+- Supports custom color mode
+
+Usage:
+Requires Aseprite CLI parameters:
+  --output-path    Output sprite path
+  --width          Sprite width (default: 32)
+  --height         Sprite height (default: 32)
+  --color-mode     Sprite color mode (default: rgb)
+]]
+
+local DEFAULT_SIZE = 32
+local DEFAULT_COLOR_MODE = 'rgb'
+local COLOR_MODES = {
     ["indexed"] = ColorMode.INDEXED,
     ["rgb"] = ColorMode.RGB,
     ["gray"] = ColorMode.GRAYSCALE,
 }
 
-if not color_modes[color_mode] then
-    color_mode = "rgb"
+local output_path = app.params["output-path"]
+if not output_path or output_path == "" then
+    error("Missing required parameter: output-path")
 end
 
-local get_color_mode = function()
-    return color_modes[color_mode]
+local function parse_positive_number(param, default)
+    local num = tonumber(param)
+    return (num and num > 0) and math.floor(num) or default
 end
 
-color_mode = get_color_mode(color_mode)
+local sprite_width = parse_positive_number(tonumber(app.params["width"]), DEFAULT_SIZE)
+local sprite_height = parse_positive_number(tonumber(app.params["height"]), DEFAULT_SIZE)
+
+local color_mode = COLOR_MODES[app.params["color-mode"]] or COLOR_MODES[DEFAULT_COLOR_MODE]
 
 -- https://www.aseprite.org/api/command/NewFile#newfile
 app.command.NewFile {
