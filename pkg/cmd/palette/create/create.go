@@ -22,12 +22,13 @@ import (
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/config"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/environment"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils"
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils/files"
 )
 
 type paletteHandler struct {
 	config          *config.Config
 	openAiClient    *openai.Client
-	asepriteCli     *aseprite.AsepriteCLI
+	asepriteCli     *aseprite.Cli
 	availableModels []string
 }
 
@@ -331,7 +332,7 @@ func (h *paletteHandler) collectSaveOptions(opts *OutputOptions, transparencyEna
 
 func (h *paletteHandler) savePalette(outputOpts *OutputOptions, paletteOpts *PaletteOptions, colors []Color) error {
 	outputPath := filepath.Join(outputOpts.Directory, outputOpts.PaletteName)
-	outputPath = utils.EnsureFileExtension(outputPath, outputOpts.FileType)
+	outputPath = files.EnsureFileExtension(outputPath, outputOpts.FileType)
 
 	palette := Palette{
 		Name:   fmt.Sprintf("AI Palette: %s", paletteOpts.Description),

@@ -6,25 +6,25 @@ import (
 	"path/filepath"
 )
 
-type AsepriteCLI struct {
+type Cli struct {
 	AsepritePath   string
 	ScriptsDirPath string
 }
 
-func NewCLI(asepritePath string, scriptsDirPath string) *AsepriteCLI {
-	return &AsepriteCLI{
+func NewCLI(asepritePath string, scriptsDirPath string) *Cli {
+	return &Cli{
 		AsepritePath:   asepritePath,
 		ScriptsDirPath: scriptsDirPath,
 	}
 }
 
-func (a *AsepriteCLI) CheckPrerequisites() error {
+func (a *Cli) CheckPrerequisites() error {
 	cmd := exec.Command(a.AsepritePath, "--version")
 	_, err := cmd.CombinedOutput()
 	return err
 }
 
-func (a *AsepriteCLI) Execute(scriptName string, args []string) (string, error) {
+func (a *Cli) Execute(scriptName string, args []string) (string, error) {
 	scriptPath := filepath.Join(a.ScriptsDirPath, scriptName)
 	args = append(args, "--script", scriptPath)
 
@@ -37,7 +37,7 @@ func (a *AsepriteCLI) Execute(scriptName string, args []string) (string, error) 
 	return string(output), nil
 }
 
-func (a *AsepriteCLI) ExecuteCommand(command Command) error {
+func (a *Cli) ExecuteCommand(command Command) error {
 	args := command.Args()
 
 	_, err := a.Execute(command.ScriptName(), args)
@@ -49,7 +49,7 @@ func (a *AsepriteCLI) ExecuteCommand(command Command) error {
 	return nil
 }
 
-func (a *AsepriteCLI) ExecuteCommandOutput(command Command) (string, error) {
+func (a *Cli) ExecuteCommandOutput(command Command) (string, error) {
 	args := command.Args()
 
 	output, err := a.Execute(command.ScriptName(), args)

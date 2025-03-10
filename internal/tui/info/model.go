@@ -7,21 +7,21 @@ import (
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/aseprite"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/assets"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/consts"
-	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils"
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils/files"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
 
 type Model struct {
 	AssetInfo *assets.AssetInfo
-	cli       *aseprite.AsepriteCLI
+	cli       *aseprite.Cli
 	Styles    *Styles
 	Width     int
 	Height    int
 	Error     string
 }
 
-func NewInfoModel(cli *aseprite.AsepriteCLI) Model {
+func NewInfoModel(cli *aseprite.Cli) Model {
 	return Model{
 		AssetInfo: &assets.AssetInfo{},
 		cli:       cli,
@@ -55,7 +55,7 @@ func (m *Model) UpdateAssetInfo(assetPath string, assetType consts.AssetsType) {
 		return
 	}
 
-	ext := utils.GetFileExtension(assetPath)
+	ext := files.GetFileExtension(assetPath)
 
 	assetInfo := &assets.AssetInfo{
 		Name:      info.Name(),

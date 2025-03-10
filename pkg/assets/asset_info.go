@@ -18,7 +18,7 @@ type AssetInfo struct {
 	Type      consts.AssetsType
 }
 
-func (info *AssetInfo) GeneratePreview(cli *aseprite.AsepriteCLI, size int) (string, error) {
+func (info *AssetInfo) GeneratePreview(cli *aseprite.Cli, size int) (string, error) {
 	params := preview.GenerateParams{
 		Filename:     info.Path,
 		ColorsPerRow: (size - 11) / 11,

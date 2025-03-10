@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	"github.com/spinozanilast/aseprite-assets-cli/pkg/consts"
 	"net/url"
 	"strings"
 
@@ -10,7 +9,8 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/config"
-	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils"
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/consts"
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils/files"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -150,9 +150,9 @@ func InitialModel(config *config.Config) Model {
 		model.fields[AppPathFld].SetValue(config.AsepritePath)
 	}
 
-	if len(config.AssetsFolderPaths) != 0 {
+	if len(config.SpriteFolderPaths) != 0 {
 		generate := model.FieldsGenerator(consts.Sprite)
-		generate(config.AssetsFolderPaths)
+		generate(config.SpriteFolderPaths)
 	}
 
 	if len(config.PalettesFolderPaths) != 0 {
@@ -290,7 +290,7 @@ func (m *Model) validateField(fld *inputField) {
 		return
 	}
 
-	if fldType == AppPathFld && utils.СheckFileExists(value, false) {
+	if fldType == AppPathFld && files.CheckFileExists(value, false) {
 		fld.status = statusValid
 	} else if fldType == OpenAiUrlFld {
 		_, err := url.ParseRequestURI(value)
@@ -301,7 +301,7 @@ func (m *Model) validateField(fld *inputField) {
 		if strings.HasPrefix(value, "sk-") {
 			fld.status = statusValid
 		}
-	} else if fldType.IsInTypes(AssetsFolderPathFld, PalettesFolderPathFld) && utils.СheckFileExists(value, true) {
+	} else if fldType.IsInTypes(AssetsFolderPathFld, PalettesFolderPathFld) && files.CheckFileExists(value, true) {
 		fld.status = statusValid
 	} else {
 		fld.status = statusInvalid
@@ -343,11 +343,11 @@ func (m *Model) handleBrowse() (tea.Model, tea.Cmd) {
 	var err error
 
 	if fldType == AppPathFld {
-		path, err = utils.OpenExecutableFilesDialog("Select Aseprite executable file")
+		path, err = files.OpenExecutableFilesDialog("Select Aseprite executable file")
 	} else if fldType == PalettesFolderPathFld {
-		path, err = utils.OpenDirectoryDialog("Select palettes store folder directory")
+		path, err = files.OpenDirectoryDialog("Select palettes store folder directory")
 	} else {
-		path, err = utils.OpenDirectoryDialog("Select Aseprite assets directory")
+		path, err = files.OpenDirectoryDialog("Select Aseprite assets directory")
 	}
 
 	if err == nil && path != "" {

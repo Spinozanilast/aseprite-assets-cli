@@ -36,7 +36,8 @@ func AvailableSupportedExtensions() []string {
 	return extensions
 }
 
-// Also consists of Aseprite and Ase extensions (from aseprite load palettes menu)
+// AvailablePaletteExtensions consists of all available palette extensions
+// Also Aseprite and Ase extensions (from aseprite load palettes menu)
 func AvailablePaletteExtensions() []string {
 	return []string{
 		".ase",

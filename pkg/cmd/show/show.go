@@ -2,6 +2,7 @@ package show
 
 import (
 	"fmt"
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils/files"
 
 	"github.com/MakeNowJust/heredoc/v2"
 	"github.com/spf13/cobra"
@@ -42,7 +43,7 @@ func NewShowCmd(env *environment.Environment) *cobra.Command {
 			if err := validateInput(params.Filename); err != nil {
 				return err
 			}
-			
+
 			generator := initializeGenerator(cfg)
 			output, err := generator.Generate(preview.GenerateParams{
 				Filename:         params.Filename,
@@ -93,11 +94,11 @@ func parseCommandParams(cmd *cobra.Command) (*struct {
 }
 
 func validateInput(filename string) error {
-	validExtension := utils.СheckFileExtension(filename,
+	validExtension := files.CheckFileExtension(filename,
 		append(aseprite.SpritesExtensions(), aseprite.AvailablePaletteExtensions()...)...,
 	)
 
-	if !utils.СheckFileExists(filename, false) || !validExtension {
+	if !files.CheckFileExists(filename, false) || !validExtension {
 		return fmt.Errorf("invalid file: %s", filename)
 	}
 	return nil

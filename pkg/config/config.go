@@ -27,7 +27,7 @@ type OpenAiConfig struct {
 
 type Config struct {
 	AsepritePath        string       `mapstructure:"aseprite_path"`
-	AssetsFolderPaths   []string     `mapstructure:"assets_folder_paths"`
+	SpriteFolderPaths   []string     `mapstructure:"assets_folder_paths"`
 	ScriptDirPath       string       `mapstructure:"scripts_dir"`
 	OpenAiConfig        OpenAiConfig `mapstructure:"open_ai_api"`
 	PalettesFolderPaths []string     `mapstructure:"palettes_folder_paths"`
@@ -132,7 +132,7 @@ func (c *Config) Validate() error {
 		return fmt.Errorf("missing required configuration: aseprite_path")
 	}
 
-	if len(c.AssetsFolderPaths) == 0 {
+	if len(c.SpriteFolderPaths) == 0 {
 		return fmt.Errorf("at least one path required in assets_folder_paths")
 	}
 

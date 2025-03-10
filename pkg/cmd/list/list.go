@@ -10,7 +10,7 @@ import (
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/consts"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/environment"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/tui"
-	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils"
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils/files"
 )
 
 type ListType int
@@ -124,7 +124,7 @@ func (opts *ListOptions) validateListType() (ListType, error) {
 func (h *listHandler) specifyListParameters() error {
 	switch {
 	case h.listType&SpritesList != 0:
-		h.folders = h.config.AssetsFolderPaths
+		h.folders = h.config.SpriteFolderPaths
 		h.extensions = aseprite.SpritesExtensions()
 		h.assetsType = consts.Sprite
 	case h.listType&PalettesList != 0:
@@ -155,16 +155,16 @@ func (h *listHandler) findSourcesRecursive() ([]list.AssetSource, error) {
 	var sources []list.AssetSource
 
 	for _, dir := range h.folders {
-		if !utils.СheckFileExists(dir, true) {
+		if !files.CheckFileExists(dir, true) {
 			return nil, fmt.Errorf("directory not found: %s", dir)
 		}
 
-		files, err := utils.FindFilesOfExtensionsRecursive(dir, h.extensions...)
+		fs, err := files.FindFilesOfExtensionsRecursive(dir, h.extensions...)
 		if err != nil {
 			return nil, fmt.Errorf("search failed in %s: %w", dir, err)
 		}
 
-		for folder, paths := range files {
+		for folder, paths := range fs {
 			sources = append(sources, list.NewAssetsSource(folder, paths))
 		}
 	}
@@ -177,17 +177,17 @@ func (h *listHandler) findFlatSources() ([]list.AssetSource, error) {
 	var sources []list.AssetSource
 
 	for _, dir := range h.folders {
-		if !utils.СheckFileExists(dir, true) {
+		if !files.CheckFileExists(dir, true) {
 			return nil, fmt.Errorf("directory not found: %s", dir)
 		}
 
-		files, err := utils.FindFilesOfExtensions(dir, h.extensions...)
+		fs, err := files.FindFilesOfExtensions(dir, h.extensions...)
 		if err != nil {
 			return nil, fmt.Errorf("search failed in %s: %w", dir, err)
 		}
 
-		if len(files) > 0 {
-			sources = append(sources, list.NewAssetsSource(dir, files))
+		if len(fs) > 0 {
+			sources = append(sources, list.NewAssetsSource(dir, fs))
 		}
 	}
 

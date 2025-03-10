@@ -5,7 +5,7 @@ import (
 
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/aseprite"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/aseprite/commands"
-	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils"
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils/files"
 )
 
 var (
@@ -13,10 +13,10 @@ var (
 )
 
 type Generator struct {
-	aseCli *aseprite.AsepriteCLI
+	aseCli *aseprite.Cli
 }
 
-func NewGenerator(aseCli *aseprite.AsepriteCLI) *Generator {
+func NewGenerator(aseCli *aseprite.Cli) *Generator {
 	return &Generator{aseCli: aseCli}
 }
 
@@ -34,9 +34,9 @@ func (g *Generator) Generate(params GenerateParams) (string, error) {
 	switch {
 	case params.IsPalettePreview:
 		cmd = g.createPaletteCommand(params)
-	case utils.СheckFileExtension(params.Filename, aseprite.SpritesExtensions()...):
+	case files.CheckFileExtension(params.Filename, aseprite.SpritesExtensions()...):
 		cmd = g.createSpriteCommand(params)
-	case utils.СheckFileExtension(params.Filename, aseprite.AvailablePaletteExtensions()...):
+	case files.CheckFileExtension(params.Filename, aseprite.AvailablePaletteExtensions()...):
 		cmd = g.createPaletteCommand(params)
 	default:
 		return "", fmt.Errorf("%w: %s", ErrUnsupportedFileType, params.Filename)

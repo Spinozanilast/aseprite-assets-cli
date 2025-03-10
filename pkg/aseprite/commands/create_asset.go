@@ -2,7 +2,7 @@ package commands
 
 import (
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/aseprite"
-	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils"
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils/files"
 )
 
 type CreateSprite struct {
@@ -23,8 +23,8 @@ func (c *CreateSprite) Args() []string {
 
 func (c *CreateSprite) ScriptCallback(asePath string) (openingCallback func()) {
 	return func() {
-		if c.OpenAfterCreation && utils.СheckFileExists(c.OutputPath, false) {
-			err := utils.OpenFileWith(asePath, c.OutputPath)
+		if c.OpenAfterCreation && files.CheckFileExists(c.OutputPath, false) {
+			err := files.OpenFileWith(asePath, c.OutputPath)
 			if err != nil {
 				return
 			}

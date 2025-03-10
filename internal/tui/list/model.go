@@ -1,15 +1,15 @@
 package list
 
 import (
-	"github.com/spinozanilast/aseprite-assets-cli/pkg/aseprite"
 	"path/filepath"
 
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/spinozanilast/aseprite-assets-cli/internal/tui/info"
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/aseprite"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/consts"
-	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils"
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils/files"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -30,7 +30,7 @@ type Model struct {
 	assetsFolders []AssetSource
 	assetsActive  []int
 
-	asepriteCli *aseprite.AsepriteCLI
+	asepriteCli *aseprite.Cli
 
 	nav folderNavigation
 
@@ -142,7 +142,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) handleEnterKey() (tea.Model, tea.Cmd) {
-	utils.OpenFileWith(m.currentItemFilename(), m.asepriteCli.AsepritePath)
+	files.OpenFileWith(m.currentItemFilename(), m.asepriteCli.AsepritePath)
 	return m, nil
 }
 

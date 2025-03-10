@@ -2,7 +2,6 @@ package create
 
 import (
 	"fmt"
-	"github.com/spinozanilast/aseprite-assets-cli/pkg/environment"
 	"path/filepath"
 	"strings"
 
@@ -10,9 +9,10 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/aseprite"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/aseprite/commands"
-	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils"
-
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/config"
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/environment"
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils"
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils/files"
 )
 
 type SpriteCreateOptions struct {
@@ -54,7 +54,7 @@ func NewSpriteCreateCmd(env *environment.Environment) *cobra.Command {
 				return err
 			}
 
-			if utils.СheckFileExists(h.outputFilename, false) {
+			if files.CheckFileExists(h.outputFilename, false) {
 				showSummary(opts)
 			} else {
 				showFailure()
@@ -74,7 +74,7 @@ func (h *spriteCreationHandler) createAsset(opts *SpriteCreateOptions) error {
 
 	filename := filepath.Join(opts.OutputPath, strings.TrimSpace(opts.AssetName)+aseprite.Aseprite.String())
 
-	if utils.СheckFileExists(filename, false) {
+	if files.CheckFileExists(filename, false) {
 		return fmt.Errorf("file already exists: %s", filename)
 	}
 
@@ -153,7 +153,7 @@ func createAssetQuestions(dirs []string) []*survey.Question {
 
 func (h *spriteCreationHandler) collectCreateOptions() (*SpriteCreateOptions, error) {
 	opts := &SpriteCreateOptions{}
-	err := survey.Ask(createAssetQuestions(h.config.AssetsFolderPaths), opts)
+	err := survey.Ask(createAssetQuestions(h.config.SpriteFolderPaths), opts)
 
 	if err != nil {
 		return nil, err

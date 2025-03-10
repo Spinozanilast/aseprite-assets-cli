@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/environment"
-	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils"
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils/files"
 )
 
 func NewConfigOpenCmd(env *environment.Environment) *cobra.Command {
@@ -19,13 +19,13 @@ func NewConfigOpenCmd(env *environment.Environment) *cobra.Command {
 			appPath, _ := cmd.Flags().GetString("app-path")
 
 			if appPath != "" {
-				if err := utils.OpenFileWith(viper.ConfigFileUsed(), appPath); err != nil {
+				if err := files.OpenFileWith(viper.ConfigFileUsed(), appPath); err != nil {
 					return fmt.Errorf("failed to open with %s: %w", appPath, err)
 				}
 				return nil
 			}
 
-			if err := utils.OpenFile(viper.ConfigFileUsed()); err != nil {
+			if err := files.OpenFile(viper.ConfigFileUsed()); err != nil {
 				return fmt.Errorf("failed to open config file: %w", err)
 			}
 			return nil

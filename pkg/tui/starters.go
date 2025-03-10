@@ -2,10 +2,12 @@ package tui
 
 import (
 	"fmt"
+
+	"github.com/spinozanilast/aseprite-assets-cli/internal/tui/list"
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/config"
+
 	tea "github.com/charmbracelet/bubbletea"
 	configTui "github.com/spinozanilast/aseprite-assets-cli/internal/tui/config"
-	list "github.com/spinozanilast/aseprite-assets-cli/internal/tui/list"
-	"github.com/spinozanilast/aseprite-assets-cli/pkg/config"
 )
 
 func StartConfigTui(config *config.Config) error {

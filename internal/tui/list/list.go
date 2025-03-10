@@ -2,10 +2,12 @@ package list
 
 import (
 	"fmt"
-	"github.com/charmbracelet/bubbles/list"
-	tea "github.com/charmbracelet/bubbletea"
 	"io"
 	"strings"
+
+	"github.com/charmbracelet/bubbles/list"
+
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 type item string

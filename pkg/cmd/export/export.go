@@ -15,7 +15,7 @@ import (
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/aseprite/commands"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/config"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/environment"
-	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils"
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils/files"
 )
 
 type SpriteScaleMode string
@@ -28,7 +28,7 @@ const (
 type exportHandler struct {
 	config      *config.Config
 	options     *exportOptions
-	asepriteCli *aseprite.AsepriteCLI
+	asepriteCli *aseprite.Cli
 }
 
 type exportOptions struct {
@@ -114,10 +114,10 @@ func (h *exportHandler) export() error {
 			return errors.New("format required when output filename is not specified")
 		}
 
-		outputPath = utils.ChangeFilenameExtension(opts.SpriteFilename, opts.Format)
+		outputPath = files.ChangeFilenameExtension(opts.SpriteFilename, opts.Format)
 	}
 
-	if err := utils.EnsureDirExists(outputPath); err != nil {
+	if err := files.EnsureDirExists(outputPath); err != nil {
 		return fmt.Errorf("failed to sprite output directory: %w", err)
 	}
 
@@ -190,9 +190,9 @@ func (o *exportOptions) collectSourceInfo(cfg *config.Config) error {
 func (o *exportOptions) spriteSuggestions(cfg *config.Config) func(string) []string {
 	return func(toComplete string) []string {
 		var suggestions []string
-		for _, folder := range cfg.AssetsFolderPaths {
-			files, _ := utils.FindFilesOfExtensionsRecursiveFlatten(folder, aseprite.SpritesExtensions()...)
-			for _, file := range files {
+		for _, folder := range cfg.SpriteFolderPaths {
+			fs, _ := files.FindFilesOfExtensionsRecursiveFlatten(folder, aseprite.SpritesExtensions()...)
+			for _, file := range fs {
 				if strings.HasPrefix(file, toComplete) {
 					suggestions = append(suggestions, file)
 				}
@@ -208,11 +208,11 @@ func (o *exportOptions) validateSpriteFile(val interface{}) error {
 		return errors.New("invalid filename type")
 	}
 
-	if !utils.СheckFileExists(filename, false) {
+	if !files.CheckFileExists(filename, false) {
 		return errors.New("file does not exist")
 	}
 
-	if !utils.СheckFileExtension(filename, aseprite.SpritesExtensions()...) {
+	if !files.CheckFileExtension(filename, aseprite.SpritesExtensions()...) {
 		return fmt.Errorf("invalid file extension, allowed: %v", aseprite.SpritesExtensions())
 	}
 
@@ -221,12 +221,12 @@ func (o *exportOptions) validateSpriteFile(val interface{}) error {
 
 func (o *exportOptions) collectOutputInfo() error {
 	if o.isOutputFilenameValid() {
-		o.Format = utils.GetFileExtension(o.OutputFilename)
+		o.Format = files.GetFileExtension(o.OutputFilename)
 		return nil
 	}
 
 	if o.isFormatValid() {
-		o.OutputFilename = utils.ChangeFilenameExtension(o.SpriteFilename, o.Format)
+		o.OutputFilename = files.ChangeFilenameExtension(o.SpriteFilename, o.Format)
 		return nil
 	}
 
@@ -251,7 +251,7 @@ func (o *exportOptions) askOutputDetails() error {
 		Prompt: &survey.Input{
 			Message: "Output path:",
 			Suggest: o.outputSuggestions(),
-			Default: utils.ChangeFilenameExtension(o.SpriteFilename, o.Format),
+			Default: files.ChangeFilenameExtension(o.SpriteFilename, o.Format),
 		},
 		Validate: o.validateOutputFile,
 	}}, o)
@@ -260,7 +260,7 @@ func (o *exportOptions) askOutputDetails() error {
 func (o *exportOptions) outputSuggestions() func(string) []string {
 	return func(toComplete string) []string {
 		var suggestions []string
-		base := utils.ChangeFilenameExtension(o.SpriteFilename, "")
+		base := files.ChangeFilenameExtension(o.SpriteFilename, "")
 
 		for _, ext := range aseprite.AvailableExportExtensions() {
 			suggestion := fmt.Sprintf("%s_export.%s", base, ext)
@@ -278,11 +278,11 @@ func (o *exportOptions) validateOutputFile(val interface{}) error {
 		return errors.New("invalid filename type")
 	}
 
-	if utils.СheckFileExists(filename, false) {
+	if files.CheckFileExists(filename, false) {
 		return errors.New("file already exists")
 	}
 
-	if !utils.СheckFileExtension(filename, aseprite.AvailableExportExtensions()...) {
+	if !files.CheckFileExtension(filename, aseprite.AvailableExportExtensions()...) {
 		return fmt.Errorf("invalid output format, allowed: %v", aseprite.AvailableExportExtensions())
 	}
 
@@ -382,18 +382,18 @@ func (o *exportOptions) isOutputInfoValid() bool {
 
 func (o *exportOptions) isSpriteFilenameValid() bool {
 	return o.SpriteFilename != "" &&
-		utils.СheckFileExists(o.SpriteFilename, false) &&
-		utils.СheckFileExtension(o.SpriteFilename, aseprite.SpritesExtensions()...)
+		files.CheckFileExists(o.SpriteFilename, false) &&
+		files.CheckFileExtension(o.SpriteFilename, aseprite.SpritesExtensions()...)
 }
 
 func (o *exportOptions) isOutputFilenameValid() bool {
 	return o.OutputFilename != "" &&
-		utils.СheckFileExtension(o.OutputFilename, aseprite.AvailableExportExtensions()...)
+		files.CheckFileExtension(o.OutputFilename, aseprite.AvailableExportExtensions()...)
 }
 
 func (o *exportOptions) isFormatValid() bool {
 	return o.Format != "" &&
-		slices.Contains(aseprite.AvailableExportExtensions(), utils.PrefExtension(o.Format))
+		slices.Contains(aseprite.AvailableExportExtensions(), files.PrefExtension(o.Format))
 }
 
 func filterSuggestions(input string, options []string) []string {

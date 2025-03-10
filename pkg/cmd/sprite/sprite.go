@@ -4,6 +4,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/cmd/sprite/create"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/cmd/sprite/open"
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/cmd/sprite/remove"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/environment"
 )
 
@@ -20,6 +21,7 @@ Subcommands allow you to:
 
 	cmd.AddCommand(create.NewSpriteCreateCmd(env))
 	cmd.AddCommand(open.NewSpriteOpenCmd(env))
+	cmd.AddCommand(remove.NewSpriteRemoveCmd(env))
 
 	return cmd
 }
