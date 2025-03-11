@@ -13,16 +13,16 @@ import (
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils"
 )
 
-type showCmd struct {
-	config           *config.Config
-	previewGenerator *preview.Generator
-	filename         string
-	colorFormat      string
-	colorsPerRow     int
-	isPalettePreview bool
+type PreviewParams struct {
+	Filename         string
+	ColorFormat      string
+	ColorsPerRow     int
+	IsPalettePreview bool
 }
 
 func NewShowCmd(env *environment.Environment) *cobra.Command {
+	params := &PreviewParams{}
+
 	cmd := &cobra.Command{
 		Use:     "show",
 		Aliases: []string{"sh"},
@@ -35,16 +35,12 @@ func NewShowCmd(env *environment.Environment) *cobra.Command {
 				return fmt.Errorf("config loading failed: %w", err)
 			}
 
-			params, err := parseCommandParams(cmd)
-			if err != nil {
-				return err
-			}
-
 			if err := validateInput(params.Filename); err != nil {
 				return err
 			}
 
 			generator := initializeGenerator(cfg)
+
 			output, err := generator.Generate(preview.GenerateParams{
 				Filename:         params.Filename,
 				ColorFormat:      params.ColorFormat,
@@ -56,41 +52,16 @@ func NewShowCmd(env *environment.Environment) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringP("filename", "f", "", "asset filename")
-	cmd.Flags().StringP("color-format", "c", "hex", "color format for palettes")
-	cmd.Flags().IntP("output-row-count", "r", 5, "colors per row for palettes")
-	cmd.Flags().BoolP("palette-preview", "p", false, "show palette preview")
-	cmd.MarkFlagRequired("filename")
+	cmd.Flags().StringVarP(&params.Filename, "Filename", "f", "", "asset Filename")
+	cmd.Flags().StringVarP(&params.ColorFormat, "color-format", "c", "hex", "color format for palettes")
+	cmd.Flags().IntVarP(&params.ColorsPerRow, "output-row-count", "r", 5, "colors per row for palettes")
+	cmd.Flags().BoolVarP(&params.IsPalettePreview, "palette-preview", "p", false, "show palette preview")
 
-	return cmd
-}
-
-func parseCommandParams(cmd *cobra.Command) (*struct {
-	Filename         string
-	ColorFormat      string
-	ColorsPerRow     int
-	IsPalettePreview bool
-}, error) {
-	filename, err := cmd.Flags().GetString("filename")
-	if err != nil {
-		return nil, fmt.Errorf("filename parameter error: %w", err)
+	if err := cmd.MarkFlagRequired("Filename"); err != nil {
+		return nil
 	}
 
-	colorFormat, _ := cmd.Flags().GetString("color-format")
-	colorsPerRow, _ := cmd.Flags().GetInt("output-row-count")
-	isPalettePreview, _ := cmd.Flags().GetBool("palette-preview")
-
-	return &struct {
-		Filename         string
-		ColorFormat      string
-		ColorsPerRow     int
-		IsPalettePreview bool
-	}{
-		Filename:         filename,
-		ColorFormat:      string(utils.ColorFormatFromString(colorFormat)),
-		ColorsPerRow:     colorsPerRow,
-		IsPalettePreview: isPalettePreview,
-	}, nil
+	return cmd
 }
 
 func validateInput(filename string) error {

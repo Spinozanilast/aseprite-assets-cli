@@ -112,5 +112,5 @@ for i = 0, color_count - 1, line_elements_count do
     end
     table.insert(output_chunks, table.concat(row, ""))
 end
-А
+
 print(table.concat(output_chunks, "\n") .. "\n")

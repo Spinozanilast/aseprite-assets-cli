@@ -233,7 +233,10 @@ func collectConfirmPaletteOptions(opts *OutputOptions) (confirm bool) {
 		Message: "Are you want to save this palette?",
 		Default: true,
 	}
-	survey.AskOne(confirmGenerationPrompt, &confirm)
+
+	if err := survey.AskOne(confirmGenerationPrompt, &confirm); err != nil {
+		return false
+	}
 
 	if confirm {
 		saveVariantPrompt := &survey.Select{
@@ -243,7 +246,10 @@ func collectConfirmPaletteOptions(opts *OutputOptions) (confirm bool) {
 		}
 
 		var selectedVariantS string
-		survey.AskOne(saveVariantPrompt, &selectedVariantS)
+		if err := survey.AskOne(saveVariantPrompt, &selectedVariantS); err != nil {
+			return false
+		}
+
 		selectedVariant := SaveVariantFromString(selectedVariantS)
 
 		if selectedVariant != SaveFile {
@@ -251,7 +257,9 @@ func collectConfirmPaletteOptions(opts *OutputOptions) (confirm bool) {
 				Message: "Palette preset name:",
 				Default: opts.PaletteName,
 			}
-			survey.AskOne(prompt, &opts.PresetName)
+			if err := survey.AskOne(prompt, &opts.PresetName); err != nil {
+				return false
+			}
 		}
 
 		opts.PaletteSaveVariant = selectedVariant
@@ -352,9 +360,9 @@ func (h *paletteHandler) savePalette(outputOpts *OutputOptions, paletteOpts *Pal
 	utils.PrintFormatted("Generated palette was saved to %s\n", outputPath)
 
 	if outputOpts.PaletteSaveVariant != SaveFile {
-		asepriteCli := aseprite.NewCLI(h.config.AsepritePath, h.config.ScriptDirPath)
+		cli := aseprite.NewCLI(h.config.AsepritePath, h.config.ScriptDirPath)
 
-		err := asepriteCli.ExecuteCommand(&commands.SavePalette{
+		err := cli.ExecuteCommand(&commands.SavePalette{
 			PresetName:      outputOpts.PresetName,
 			PaletteFilename: outputPath,
 		})
@@ -447,11 +455,11 @@ func parseResponse(response string) ([]Color, error) {
 	colorStrings := strings.Split(response, ",")
 
 	for _, cs := range colorStrings {
-		color, err := parseColor(cs)
+		clr, err := parseColor(cs)
 		if err != nil {
 			return nil, fmt.Errorf("invalid AI response format: %v", err)
 		}
-		colors = append(colors, color)
+		colors = append(colors, clr)
 	}
 
 	return colors, nil
@@ -503,9 +511,9 @@ func generateGPL(palette Palette, path string) error {
 	buf.WriteString(fmt.Sprintf("Name: %s\n", palette.Name))
 	buf.WriteString("Columns: 0\n#\n")
 
-	for i, color := range palette.Colors {
+	for i, clr := range palette.Colors {
 		buf.WriteString(fmt.Sprintf("%-3d %-3d %-3d Color %d\n",
-			color.R, color.G, color.B, i+1))
+			clr.R, clr.G, clr.B, i+1))
 	}
 
 	return os.WriteFile(path, buf.Bytes(), 0644)
@@ -542,8 +550,8 @@ func presentResults(colors []Color, colorsPerRow int) error {
 
 	fmt.Printf("✅ Generated palette with %d colors\n", len(colors))
 
-	for i, color := range colors {
-		hex := fmt.Sprintf("#%02x%02x%02x", color.R, color.G, color.B)
+	for i, clr := range colors {
+		hex := fmt.Sprintf("#%02x%02x%02x", clr.R, clr.G, clr.B)
 		style := lipgloss.NewStyle().Background(lipgloss.Color(hex)).Foreground(lipgloss.Color("#000000")).Padding(0, 1)
 		fmt.Print(style.Render(hex))
 

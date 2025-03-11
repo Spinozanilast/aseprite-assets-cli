@@ -88,6 +88,7 @@ func ConfirmActions() bool {
 	}
 
 	var confirm bool
+
 	if err := survey.AskOne(question, &confirm); err != nil {
 		return false
 	} else {

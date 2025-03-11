@@ -42,17 +42,3 @@ func ChangeFilenameExtension(filename, extension string) string {
 func GetFileExtension(filename string) string {
 	return filepath.Ext(filename)
 }
-
-// appendDirFilesIfExists helper function adds files with specified extension from directory to map.
-// Non-exported internal function.
-func appendDirFilesIfExists(dirsFiles map[string][]string, dir string, extension string) (map[string][]string, error) {
-	files, err := FindFilesOfExtensions(dir, extension)
-
-	if err != nil {
-		return nil, err
-	} else if len(files) > 0 {
-		dirsFiles[dir] = files
-	}
-
-	return dirsFiles, nil
-}
