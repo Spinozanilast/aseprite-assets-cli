@@ -3,6 +3,8 @@ package manager
 import (
 	"errors"
 	"fmt"
+	"github.com/AlecAivazis/survey/v2"
+
 	"github.com/spf13/cobra"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/config"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/consts"
@@ -11,10 +13,11 @@ import (
 )
 
 type Params struct {
-	Env             *environment.Environment
-	AssetAction     Action
-	ValidExtensions []string
-	AssetsType      consts.AssetsType
+	Env                *environment.Environment
+	AssetAction        Action
+	ValidExtensions    []string
+	AssetsType         consts.AssetsType
+	ConfirmationNeeded bool
 }
 
 type Command struct {
@@ -40,6 +43,10 @@ func NewAssetManagerCommand(params Params) *Command {
 
 		if len(args) == 0 {
 			return errors.New("no arg given")
+		}
+
+		if params.ConfirmationNeeded && !ConfirmActions() {
+			return nil
 		}
 
 		for _, arg := range args {
@@ -72,6 +79,20 @@ func NewAssetManagerCommand(params Params) *Command {
 	}
 
 	return cmd
+}
+
+func ConfirmActions() bool {
+	question := &survey.Confirm{
+		Message: "Are you sure you want to proceed?",
+		Default: false,
+	}
+
+	var confirm bool
+	if err := survey.AskOne(question, &confirm); err != nil {
+		return false
+	} else {
+		return confirm
+	}
 }
 
 func chooseAssetsDirs(assetsType consts.AssetsType, cfg *config.Config) []string {

@@ -28,10 +28,11 @@ func NewSpriteRemoveCmd(env *environment.Environment) *cobra.Command {
 	}
 
 	managerParams := manager.Params{
-		Env:             env,
-		AssetAction:     removeAction,
-		ValidExtensions: aseprite.SpritesExtensions(),
-		AssetsType:      consts.Sprite,
+		Env:                env,
+		AssetAction:        removeAction,
+		ValidExtensions:    aseprite.SpritesExtensions(),
+		AssetsType:         consts.Sprite,
+		ConfirmationNeeded: true,
 	}
 
 	managerCmd := manager.NewAssetManagerCommand(managerParams)

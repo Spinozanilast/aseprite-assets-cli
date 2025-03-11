@@ -22,10 +22,11 @@ func NewSpriteOpenCmd(env *environment.Environment) *cobra.Command {
 	}
 
 	managerParams := manager.Params{
-		Env:             env,
-		AssetAction:     openAction,
-		ValidExtensions: aseprite.SpritesExtensions(),
-		AssetsType:      consts.Sprite,
+		Env:                env,
+		AssetAction:        openAction,
+		ValidExtensions:    aseprite.SpritesExtensions(),
+		AssetsType:         consts.Sprite,
+		ConfirmationNeeded: false,
 	}
 
 	managerCmd := manager.NewAssetManagerCommand(managerParams)

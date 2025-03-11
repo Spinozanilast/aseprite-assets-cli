@@ -28,10 +28,11 @@ func NewPaletteRemoveCmd(env *environment.Environment) *cobra.Command {
 	}
 
 	managerParams := manager.Params{
-		Env:             env,
-		AssetAction:     removeAction,
-		ValidExtensions: aseprite.PaletteExtensions(),
-		AssetsType:      consts.Palette,
+		Env:                env,
+		AssetAction:        removeAction,
+		ValidExtensions:    aseprite.PaletteExtensions(),
+		AssetsType:         consts.Palette,
+		ConfirmationNeeded: true,
 	}
 
 	managerCmd := manager.NewAssetManagerCommand(managerParams)
