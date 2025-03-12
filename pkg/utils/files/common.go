@@ -27,7 +27,9 @@ func EnsureFileExtension(filename, extension string) string {
 // ChangeFilenameExtension replaces the extension of a filename with the specified extension.
 // Adds extension if filename has none.
 func ChangeFilenameExtension(filename, extension string) string {
-	extension = PrefExtension(extension)
+	if extension != "" {
+		extension = PrefExtension(extension)
+	}
 	dotIdx := strings.LastIndex(filename, ".")
 
 	if dotIdx == -1 {

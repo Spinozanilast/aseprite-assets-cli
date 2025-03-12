@@ -6,6 +6,7 @@ type ExportSprite struct {
 	BatchMode      bool
 	SpriteFilename string `script:"sprite-filename" format:"quotes"`
 	OutputFilename string `script:"output-filename" format:"quotes"`
+	FramesIncluded string `script:"frames-included"`
 	Format         string
 	Sizes          string
 	Scales         string

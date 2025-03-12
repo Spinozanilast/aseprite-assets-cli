@@ -3,11 +3,6 @@ package export
 import (
 	"errors"
 	"fmt"
-	"log"
-	"slices"
-	"strconv"
-	"strings"
-
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/MakeNowJust/heredoc/v2"
 	"github.com/spf13/cobra"
@@ -16,6 +11,9 @@ import (
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/config"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/environment"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils/files"
+	"slices"
+	"strconv"
+	"strings"
 )
 
 type SpriteScaleMode string
@@ -34,12 +32,14 @@ type exportHandler struct {
 type exportOptions struct {
 	SpriteFilename string `survey:"sprite-filename"`
 	OutputFilename string `survey:"output-filename"`
+	FramesIncluded string `survey:"frames-included"`
 	Format         string
 	Sizes          string
 	Scales         string
 }
 
 func NewExportCmd(env *environment.Environment) *cobra.Command {
+	options := &exportOptions{}
 
 	cmd := &cobra.Command{
 		Use:     "export [ARG]",
@@ -64,15 +64,9 @@ func NewExportCmd(env *environment.Environment) *cobra.Command {
 
 			h := &exportHandler{
 				config:      cfg,
-				options:     &exportOptions{},
+				options:     options,
 				asepriteCli: aseprite.NewCLI(cfg.AsepritePath, cfg.ScriptDirPath),
 			}
-
-			h.options.SpriteFilename, _ = cmd.Flags().GetString("sprite-filename")
-			h.options.OutputFilename, _ = cmd.Flags().GetString("output-filename")
-			h.options.Format, _ = cmd.Flags().GetString("format")
-			h.options.Sizes, _ = cmd.Flags().GetString("sizes")
-			h.options.Scales, _ = cmd.Flags().GetString("scales")
 
 			if h.options.needsSurvey() {
 				if err := h.options.collect(cfg); err != nil {
@@ -88,11 +82,12 @@ func NewExportCmd(env *environment.Environment) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringP("sprite-filename", "s", "", "aseprite asset filename")
-	cmd.Flags().StringP("output-filename", "o", "", "output filename")
-	cmd.Flags().StringP("format", "f", "", "output format")
-	cmd.Flags().String("sizes", "", "comma separated list of sizes (e.g., \"64x64,128x128\")")
-	cmd.Flags().String("scales", "", "comma separated list of scales (e.g., \"1,2,3\")")
+	cmd.Flags().StringVarP(&options.SpriteFilename, "sprite-filename", "s", "", "aseprite asset filename")
+	cmd.Flags().StringVarP(&options.OutputFilename, "output-filename", "o", "", "output filename")
+	cmd.Flags().StringVarP(&options.Format, "format", "f", "", "output format")
+	cmd.Flags().StringVar(&options.Sizes, "sizes", "", "comma separated list of sizes (e.g., \"64x64,128x128\")")
+	cmd.Flags().StringVar(&options.Scales, "scales", "", "comma separated list of scales (e.g., \"1,2,3\")")
+	cmd.Flags().StringVar(&options.FramesIncluded, "frames", "0", "frames included template - zero based (e.g. '0:2', '0', '*'")
 
 	return cmd
 }
@@ -104,13 +99,13 @@ func (h *exportHandler) export() error {
 		return fmt.Errorf("cannot specify both scales and sizes, choose one")
 	}
 
-	if !opts.isSpriteFilenameValid() {
+	if !opts.IsSpriteFilenameValid() {
 		return fmt.Errorf("invalid sprite filename: %q", opts.SpriteFilename)
 	}
 
 	outputPath := opts.OutputFilename
 	if outputPath == "" {
-		if !opts.isFormatValid() {
+		if !opts.IsFormatValid() {
 			return errors.New("format required when output filename is not specified")
 		}
 
@@ -121,13 +116,14 @@ func (h *exportHandler) export() error {
 		return fmt.Errorf("failed to sprite output directory: %w", err)
 	}
 
-	log.Printf("Exporting sprite: %s to output: %s", opts.SpriteFilename, outputPath)
+	fmt.Printf("Exporting sprite: %s to output: %s\n", opts.SpriteFilename, outputPath)
 
 	exportCmd := &commands.ExportSprite{
 		BatchMode:      true,
 		SpriteFilename: opts.SpriteFilename,
 		OutputFilename: outputPath,
 		Format:         opts.Format,
+		FramesIncluded: opts.FramesIncluded,
 	}
 
 	switch {
@@ -151,8 +147,9 @@ func (h *exportHandler) export() error {
 		return fmt.Errorf("failed to export sprite: %w", err)
 	}
 
-	log.Printf("Successfully exported sprite to: %s", outputPath)
-	fmt.Printf("Successfully exported to:\n%s", output)
+	if output != "" {
+		fmt.Printf("Export result:\n%s", output)
+	}
 	return nil
 }
 
@@ -162,6 +159,10 @@ func (o *exportOptions) collect(cfg *config.Config) error {
 	}
 
 	if err := o.collectOutputInfo(); err != nil {
+		return err
+	}
+
+	if err := o.collectFramesInfo(); err != nil {
 		return err
 	}
 
@@ -179,12 +180,46 @@ func (o *exportOptions) collectSourceInfo(cfg *config.Config) error {
 			Prompt: &survey.Input{
 				Message: "Sprite filename:",
 				Suggest: o.spriteSuggestions(cfg),
-				Default: o.SpriteFilename,
 			},
 			Validate: o.validateSpriteFile,
 		},
 	}
 	return survey.Ask(qs, o)
+}
+
+func (o *exportOptions) collectOutputInfo() error {
+	if o.IsOutputFilenameValid() {
+		o.Format = files.GetFileExtension(o.OutputFilename)
+		return nil
+	}
+
+	if o.IsFormatValid() {
+		o.OutputFilename = files.ChangeFilenameExtension(o.SpriteFilename, o.Format)
+		return nil
+	}
+
+	return o.askOutputDetails()
+}
+
+func (o *exportOptions) collectFramesInfo() error {
+	if err := survey.AskOne(
+		&survey.Input{
+			Message: "Frames to export (e.g. '1:3', '*', '5'):",
+			Default: "1",
+			Suggest: func(toComplete string) []string {
+				return []string{"*", "1", "1:5", "2:10"}
+			},
+		},
+		&o.FramesIncluded,
+		survey.WithValidator(func(ans interface{}) error {
+			input := ans.(string)
+			return ValidateFramesInput(input)
+		}),
+	); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (o *exportOptions) spriteSuggestions(cfg *config.Config) func(string) []string {
@@ -219,51 +254,59 @@ func (o *exportOptions) validateSpriteFile(val interface{}) error {
 	return nil
 }
 
-func (o *exportOptions) collectOutputInfo() error {
-	if o.isOutputFilenameValid() {
-		o.Format = files.GetFileExtension(o.OutputFilename)
-		return nil
-	}
-
-	if o.isFormatValid() {
-		o.OutputFilename = files.ChangeFilenameExtension(o.SpriteFilename, o.Format)
-		return nil
-	}
-
-	return o.askOutputDetails()
-}
-
 func (o *exportOptions) askOutputDetails() error {
-	if err := survey.AskOne(
-		&survey.Select{
-			Message: "Output format:",
-			Options: aseprite.AvailableExportExtensions(),
-			Default: o.Format,
-		},
-		&o.Format,
-		survey.WithValidator(o.validateFormat),
-	); err != nil {
+	var askFormat bool
+
+	question := &survey.Confirm{
+		Message: "Do you want to just choose format? (if no, go to write full output path)",
+		Default: true,
+	}
+
+	if err := survey.AskOne(question, &askFormat); err != nil {
 		return err
 	}
 
-	return survey.Ask([]*survey.Question{{
-		Name: "OutputFilename",
-		Prompt: &survey.Input{
-			Message: "Output path:",
-			Suggest: o.outputSuggestions(),
-			Default: files.ChangeFilenameExtension(o.SpriteFilename, o.Format),
-		},
-		Validate: o.validateOutputFile,
-	}}, o)
+	if askFormat {
+		if err := survey.AskOne(
+			&survey.Select{
+				Message: "Output format:",
+				Options: aseprite.AvailableExportExtensions(),
+			},
+			&o.Format,
+		); err != nil {
+			return err
+		}
+		o.OutputFilename = ""
+	} else {
+		if err := survey.Ask([]*survey.Question{{
+			Name: "OutputFilename",
+			Prompt: &survey.Input{
+				Message: "Output path:",
+				Suggest: o.outputSuggestions(),
+				Default: files.ChangeFilenameExtension(o.SpriteFilename, aseprite.PNG.String()),
+			},
+			Validate: o.validateOutputFile,
+		}}, o); err != nil {
+			return err
+		}
+		o.Format = ""
+	}
+
+	return nil
 }
 
 func (o *exportOptions) outputSuggestions() func(string) []string {
 	return func(toComplete string) []string {
 		var suggestions []string
+
+		if toComplete == "" {
+			return suggestions
+		}
+
 		base := files.ChangeFilenameExtension(o.SpriteFilename, "")
 
 		for _, ext := range aseprite.AvailableExportExtensions() {
-			suggestion := fmt.Sprintf("%s_export.%s", base, ext)
+			suggestion := fmt.Sprintf("%s%s", base, ext)
 			if strings.HasPrefix(suggestion, toComplete) {
 				suggestions = append(suggestions, suggestion)
 			}
@@ -284,19 +327,6 @@ func (o *exportOptions) validateOutputFile(val interface{}) error {
 
 	if !files.CheckFileExtension(filename, aseprite.AvailableExportExtensions()...) {
 		return fmt.Errorf("invalid output format, allowed: %v", aseprite.AvailableExportExtensions())
-	}
-
-	return nil
-}
-
-func (o *exportOptions) validateFormat(val interface{}) error {
-	format, ok := val.(string)
-	if !ok {
-		return errors.New("invalid format type")
-	}
-
-	if !slices.Contains(aseprite.AvailableExportExtensions(), format) {
-		return fmt.Errorf("invalid format, allowed: %v", aseprite.AvailableExportExtensions())
 	}
 
 	return nil
@@ -338,7 +368,6 @@ func (o *exportOptions) collectScales() error {
 	return survey.AskOne(
 		&survey.Input{
 			Message: "Enter scales (comma-separated):",
-			Default: o.Scales,
 			Suggest: o.scaleSuggestions(),
 		},
 		&o.Scales,
@@ -357,7 +386,6 @@ func (o *exportOptions) collectSizes() error {
 	return survey.AskOne(
 		&survey.Input{
 			Message: "Enter sizes (comma-separated WxH):",
-			Default: o.Sizes,
 			Suggest: o.sizeSuggestions(),
 		},
 		&o.Sizes,
@@ -376,46 +404,24 @@ func (o *exportOptions) sizeSuggestions() func(string) []string {
 	}
 }
 
-func (o *exportOptions) isOutputInfoValid() bool {
-	return o.isOutputFilenameValid() || o.isFormatValid()
+func (o *exportOptions) IsOutputInfoValid() bool {
+	return o.IsOutputFilenameValid() || o.IsFormatValid()
 }
 
-func (o *exportOptions) isSpriteFilenameValid() bool {
+func (o *exportOptions) IsSpriteFilenameValid() bool {
 	return o.SpriteFilename != "" &&
 		files.CheckFileExists(o.SpriteFilename, false) &&
 		files.CheckFileExtension(o.SpriteFilename, aseprite.SpritesExtensions()...)
 }
 
-func (o *exportOptions) isOutputFilenameValid() bool {
+func (o *exportOptions) IsOutputFilenameValid() bool {
 	return o.OutputFilename != "" &&
 		files.CheckFileExtension(o.OutputFilename, aseprite.AvailableExportExtensions()...)
 }
 
-func (o *exportOptions) isFormatValid() bool {
+func (o *exportOptions) IsFormatValid() bool {
 	return o.Format != "" &&
 		slices.Contains(aseprite.AvailableExportExtensions(), files.PrefExtension(o.Format))
-}
-
-func filterSuggestions(input string, options []string) []string {
-	var matches []string
-	for _, opt := range options {
-		if strings.HasPrefix(opt, input) {
-			matches = append(matches, opt)
-		}
-	}
-	return matches
-}
-
-func (o *exportOptions) needsSurvey() bool {
-	if !o.isSpriteFilenameValid() || !o.isOutputInfoValid() {
-		return true
-	}
-	if (o.Scales != "" && ValidateScalesInput(o.Scales) != nil) ||
-		(o.Sizes != "" && ValidateSizesInput(o.Sizes) != nil) {
-		return true
-	}
-
-	return false
 }
 
 func ValidateScalesInputValidator(ans interface{}) error {
@@ -443,7 +449,7 @@ func ValidateScalesInput(input string) error {
 
 	elements := strings.Split(input, ",")
 
-	if err := validateNumberList(elements); err == nil {
+	if err := ValidateNumberList(elements); err == nil {
 		return nil
 	}
 
@@ -457,14 +463,14 @@ func ValidateSizesInput(input string) error {
 
 	elements := strings.Split(input, ",")
 
-	if err := validatePairList(elements); err == nil {
+	if err := ValidatePairList(elements); err == nil {
 		return nil
 	}
 
 	return errors.New("invalid format: sizes must be a comma-separated list of pairs (e.g., \"64x64,128x128\")")
 }
 
-func validateNumberList(elements []string) error {
+func ValidateNumberList(elements []string) error {
 	for _, elem := range elements {
 		elem = strings.TrimSpace(elem)
 		if _, err := strconv.Atoi(elem); err != nil {
@@ -474,7 +480,7 @@ func validateNumberList(elements []string) error {
 	return nil
 }
 
-func validatePairList(elements []string) error {
+func ValidatePairList(elements []string) error {
 	for _, elem := range elements {
 		elem = strings.TrimSpace(elem)
 		parts := strings.Split(elem, "x")
@@ -493,4 +499,57 @@ func validatePairList(elements []string) error {
 		}
 	}
 	return nil
+}
+
+func ValidateFramesInput(input string) error {
+	if input == "" {
+		return errors.New("frames cannot be empty")
+	}
+
+	if input == "*" {
+		return nil
+	}
+
+	if _, err := strconv.Atoi(input); err == nil {
+		return nil
+	}
+
+	parts := strings.Split(input, ":")
+	if len(parts) != 2 {
+		return fmt.Errorf("invalid frames format: %s", input)
+	}
+
+	start, err := strconv.Atoi(parts[0])
+	if err != nil {
+		return fmt.Errorf("invalid start frame: %s", parts[0])
+	}
+
+	end, err := strconv.Atoi(parts[1])
+	if err != nil {
+		return fmt.Errorf("invalid end frame: %s", parts[1])
+	}
+
+	if start > end {
+		return fmt.Errorf("start frame %d > end frame %d", start, end)
+	}
+
+	return nil
+}
+
+func filterSuggestions(input string, options []string) []string {
+	var matches []string
+	for _, opt := range options {
+		if strings.HasPrefix(opt, input) {
+			matches = append(matches, opt)
+		}
+	}
+	return matches
+}
+
+func (o *exportOptions) needsSurvey() bool {
+	return !o.IsSpriteFilenameValid() ||
+		!o.IsOutputInfoValid() ||
+		ValidateFramesInput(o.FramesIncluded) != nil ||
+		(o.Scales != "" && ValidateScalesInput(o.Scales) != nil) ||
+		(o.Sizes != "" && ValidateSizesInput(o.Sizes) != nil)
 }

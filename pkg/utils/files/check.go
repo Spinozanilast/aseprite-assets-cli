@@ -27,14 +27,11 @@ func CheckAnyFileOfExtensionsExists(folderPath string, extensions ...string) (bo
 // EnsureDirExists verifies and creates the directory containing the specified file path if necessary.
 // Returns error if directory creation fails or path is invalid.
 func EnsureDirExists(path string) error {
-	info, err := os.Stat(filepath.Dir(path))
-	if err != nil {
-		return err
-	}
+	dir := filepath.Dir(path)
+	_, err := os.Stat(dir)
 
-	if !info.IsDir() {
-		os.Mkdir(path, os.ModePerm)
-		_, err = os.Stat(path)
+	if err != nil {
+		err := os.Mkdir(dir, os.ModePerm)
 		if err != nil {
 			return err
 		}
