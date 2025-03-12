@@ -3,9 +3,10 @@ package manager
 import (
 	"errors"
 	"fmt"
-	"github.com/AlecAivazis/survey/v2"
 
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
+	autocomp "github.com/spinozanilast/aseprite-assets-cli/internal/cmd"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/config"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/consts"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/environment"
@@ -62,20 +63,15 @@ func NewAssetManagerCommand(params Params) *Command {
 		return nil
 	}
 
-	cmd.AutocompletionFunc = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	cmd.AutocompletionFunc = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		cfg, err := params.Env.Config()
+
 		if err != nil {
 			return nil, cobra.ShellCompDirectiveError
 		}
 
-		var completions []string
-		for _, dir := range chooseAssetsDirs(params.AssetsType, cfg) {
-			fs, err := files.FindFilesOfExtensionsRecursiveFlatten(dir, validExtensions...)
-			if err == nil {
-				completions = append(completions, fs...)
-			}
-		}
-		return completions, cobra.ShellCompDirectiveNoFileComp
+		autocomplete := autocomp.GenerateFilesAutoCompletions(chooseAssetsDirs(params.AssetsType, cfg), validExtensions)
+		return autocomplete(cmd, args, toComplete)
 	}
 
 	return cmd

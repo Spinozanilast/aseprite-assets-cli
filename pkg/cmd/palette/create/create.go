@@ -394,20 +394,8 @@ func (h *paletteHandler) generateColors(params generationParams) ([]Color, error
 		prompt += "\nInclude transparency in the colors."
 	}
 
-	done := make(chan bool)
-	go func() {
-		for {
-			select {
-			case <-done:
-				return
-			default:
-				for _, r := range `-\|/` {
-					fmt.Printf("\r%c Generating colors...", r)
-					time.Sleep(100 * time.Millisecond)
-				}
-			}
-		}
-	}()
+	stopSpinner := make(chan bool)
+	go utils.CreateSpinner("-\\|/", stopSpinner, "Generating Colors")
 
 	resp, err := h.openAiClient.CreateChatCompletion(
 		context.Background(),
@@ -421,7 +409,9 @@ func (h *paletteHandler) generateColors(params generationParams) ([]Color, error
 			},
 		},
 	)
-	done <- true
+	stopSpinner <- true
+	<-stopSpinner
+
 	fmt.Println()
 
 	if err != nil {
