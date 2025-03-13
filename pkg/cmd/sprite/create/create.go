@@ -35,7 +35,7 @@ func NewSpriteCreateCmd(env *environment.Environment) *cobra.Command {
 		Aliases: []string{"c", "cr"},
 		Short:   "Create aseprite sprite",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.LoadConfig()
+			cfg, err := env.Config()
 			if err != nil {
 				return err
 			}

@@ -2,7 +2,6 @@ package show
 
 import (
 	"fmt"
-	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils/files"
 
 	"github.com/MakeNowJust/heredoc/v2"
 	"github.com/spf13/cobra"
@@ -11,6 +10,7 @@ import (
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/config"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/environment"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils"
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils/files"
 )
 
 type PreviewParams struct {

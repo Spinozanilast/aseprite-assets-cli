@@ -58,7 +58,7 @@ func NewExportCmd(env *environment.Environment) *cobra.Command {
 	# Export aseprite asset to png format in sizes 64x64,128x128
 	aseprite-assets export <asset-filename> --format png --sizes 64x64,128x128`),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.LoadConfig()
+			cfg, err := env.Config()
 			if err != nil {
 				return err
 			}

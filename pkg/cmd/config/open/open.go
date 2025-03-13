@@ -9,7 +9,7 @@ import (
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils/files"
 )
 
-func NewConfigOpenCmd(env *environment.Environment) *cobra.Command {
+func NewConfigOpenCmd(_ *environment.Environment) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "open",
 		Short: "Open configuration file in editor or via app",

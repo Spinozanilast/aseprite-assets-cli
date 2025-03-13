@@ -38,7 +38,7 @@ aseprite-assets config edit`),
 				return nil
 			}
 
-			cfg, err := config.LoadConfig()
+			cfg, err := env.Config()
 			if err != nil {
 				return fmt.Errorf("failed to load config: %w", err)
 			}
