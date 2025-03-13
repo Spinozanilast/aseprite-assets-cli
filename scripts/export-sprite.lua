@@ -17,6 +17,7 @@ Requires Aseprite CLI parameters:
   --sizes            Comma-separated size list (WxH)
   --scales           Comma-separated scale factors
 ]]
+
 local FRAMES_INCLUDED_SEPARATOR = ":"
 
 local sprite_filename = app.params["sprite-filename"]

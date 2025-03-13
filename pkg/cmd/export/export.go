@@ -10,6 +10,7 @@ import (
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/aseprite/commands"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/config"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/environment"
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils/files"
 	"slices"
 	"strconv"
@@ -69,6 +70,7 @@ func NewExportCmd(env *environment.Environment) *cobra.Command {
 			}
 
 			if h.options.needsSurvey() {
+				utils.PrintlnBold("Do not have enough data to export sprite\n")
 				if err := h.options.collect(cfg); err != nil {
 					return err
 				}
@@ -119,7 +121,6 @@ func (h *exportHandler) export() error {
 	fmt.Printf("Exporting sprite: %s to output: %s\n", opts.SpriteFilename, outputPath)
 
 	exportCmd := &commands.ExportSprite{
-		BatchMode:      true,
 		SpriteFilename: opts.SpriteFilename,
 		OutputFilename: outputPath,
 		Format:         opts.Format,
