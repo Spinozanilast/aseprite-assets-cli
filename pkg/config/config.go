@@ -3,21 +3,27 @@ package config
 import (
 	"errors"
 	"fmt"
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils/files"
+	"go.uber.org/multierr"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/spf13/viper"
 )
 
 const (
-	configName      = ".aseprite-assets-cli"
-	configType      = "json"
-	AsepritePathKey = "aseprite_path"
-	ScriptDirKey    = "scripts_dir"
-	AssetsDirsKey   = "assets_folder_paths"
-	OpenAiConfigKey = "open_ai_api"
-	PalettesDirsKey = "palettes_folder_paths"
+	openAiApiUrl = "https://api.openai.com/v1"
+
+	configName = ".aseprite-assets-cli"
+	configType = "json"
+
+	asepritePathKey = "aseprite_path"
+	scriptDirKey    = "scripts_dir"
+	spriteDirsKey   = "assets_folder_paths"
+	openAiConfigKey = "open_ai_api"
+	palettesDirsKey = "palettes_folder_paths"
 )
 
 type OpenAiConfig struct {
@@ -26,13 +32,14 @@ type OpenAiConfig struct {
 }
 
 type Config struct {
-	AsepritePath        string       `mapstructure:"aseprite_path"`
-	SpriteFolderPaths   []string     `mapstructure:"assets_folder_paths"`
-	ScriptDirPath       string       `mapstructure:"scripts_dir"`
-	OpenAiConfig        OpenAiConfig `mapstructure:"open_ai_api"`
-	PalettesFolderPaths []string     `mapstructure:"palettes_folder_paths"`
+	AsepritePath         string       `mapstructure:"aseprite_path"`
+	SpritesFoldersPaths  []string     `mapstructure:"assets_folder_paths"`
+	ScriptDirPath        string       `mapstructure:"scripts_dir"`
+	PalettesFoldersPaths []string     `mapstructure:"palettes_folder_paths"`
+	OpenAiConfig         OpenAiConfig `mapstructure:"open_ai_api"`
 }
 
+// LoadConfig loads the configuration from the file system (use it again if you need config after updating)
 func LoadConfig() (*Config, error) {
 	if err := initConfig(); err != nil {
 		return nil, fmt.Errorf("config initialization failed: %w", err)
@@ -47,18 +54,23 @@ func LoadConfig() (*Config, error) {
 }
 
 func Info() string {
-	return fmt.Sprintf("Config file used: %s\nAll settings: %+v", viper.ConfigFileUsed(), viper.AllSettings())
+	var settingsBuilder strings.Builder
+	for key, value := range viper.AllSettings() {
+		settingsBuilder.WriteString(fmt.Sprintf("\t%v: %v\n", key, value))
+	}
+
+	return fmt.Sprintf("Config file used: %s\nAll settings: \n[\n%s]", viper.ConfigFileUsed(), settingsBuilder.String())
 }
 
-func SavePaths(appPath string, assetsDirs []string, palettesDirs []string) error {
-	viper.Set(AsepritePathKey, appPath)
-	viper.Set(AssetsDirsKey, assetsDirs)
-	viper.Set(PalettesDirsKey, palettesDirs)
+func SavePaths(appPath string, spritesDirs []string, palettesDirs []string) error {
+	viper.Set(asepritePathKey, appPath)
+	viper.Set(spriteDirsKey, spritesDirs)
+	viper.Set(palettesDirsKey, palettesDirs)
 	return saveConfig()
 }
 
 func SetScriptDirPath(path string) error {
-	viper.Set(ScriptDirKey, path)
+	viper.Set(scriptDirKey, path)
 	return saveConfig()
 }
 
@@ -69,12 +81,12 @@ func SetDefaultScriptDirPath() error {
 	}
 
 	scriptsDir := filepath.Join(pwd, "scripts")
-	viper.Set(ScriptDirKey, scriptsDir)
+	viper.Set(scriptDirKey, scriptsDir)
 	return saveConfig()
 }
 
 func SetOpenAiConfig(apiKey string, apiUrl string) error {
-	viper.Set(OpenAiConfigKey, OpenAiConfig{
+	viper.Set(openAiConfigKey, OpenAiConfig{
 		ApiKey: apiKey,
 		ApiUrl: apiUrl,
 	})
@@ -82,42 +94,31 @@ func SetOpenAiConfig(apiKey string, apiUrl string) error {
 }
 
 func initConfig() error {
-	homeDir := os.Getenv("HOME")
-	if homeDir == "" {
-		var err error
-		homeDir, err = os.UserHomeDir()
-		if err != nil {
-			return fmt.Errorf("failed to get home directory: %w", err)
-		}
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("failed to determine home directory: %w", err)
 	}
-
-	configFile := filepath.Join(homeDir, configName+"."+configType)
-	viper.SetConfigFile(configFile)
 
 	viper.AutomaticEnv()
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
-	pwd, err := os.Getwd()
-	if err != nil {
-		return fmt.Errorf("failed to get working directory: %w", err)
-	}
+	viper.SetConfigName(configName)
+	viper.SetConfigType(configType)
+	viper.AddConfigPath(homeDir)
 
-	viper.SetDefault(AsepritePathKey, "")
-	viper.SetDefault(AssetsDirsKey, []string{})
-	viper.SetDefault(ScriptDirKey, filepath.Join(pwd, "scripts"))
-	viper.SetDefault(OpenAiConfigKey, OpenAiConfig{
-		ApiUrl: "https://api.openai.com/v1",
+	pwd, _ := os.Getwd()
+	viper.SetDefault(asepritePathKey, os.Getenv("ASEPRITE"))
+	viper.SetDefault(scriptDirKey, filepath.Join(pwd, "scripts"))
+	viper.SetDefault(spriteDirsKey, "")
+	viper.SetDefault(palettesDirsKey, "")
+	viper.SetDefault(openAiConfigKey, OpenAiConfig{
+		ApiUrl: openAiApiUrl,
 		ApiKey: os.Getenv("OPENAI_API_KEY"),
 	})
-	viper.SetDefault(PalettesDirsKey, []string{})
 
 	if err := viper.ReadInConfig(); err != nil {
-		var configFileNotFoundError viper.ConfigFileNotFoundError
-		if errors.As(err, &configFileNotFoundError) {
-			// Ensure the directory exists before writing
-			if err := os.MkdirAll(filepath.Dir(configFile), 0755); err != nil {
-				return fmt.Errorf("failed to sprite config directory: %w", err)
-			}
+		var configNotFound viper.ConfigFileNotFoundError
+		if errors.As(err, &configNotFound) {
 			if err := viper.SafeWriteConfig(); err != nil {
 				return fmt.Errorf("failed to write initial config: %w", err)
 			}
@@ -128,24 +129,45 @@ func initConfig() error {
 }
 
 func (c *Config) Validate() error {
+	var errs []error
+
 	if c.AsepritePath == "" {
-		return fmt.Errorf("missing required configuration: aseprite_path")
+		errs = append(errs, errors.New("missing required configuration: aseprite_path"))
+	} else if !filepath.IsAbs(c.AsepritePath) || (runtime.GOOS == "windows" && !files.CheckFileExtension(c.AsepritePath, "exe")) {
+		errs = append(errs, errors.New("aseprite path need to be absolute executable path"))
 	}
 
-	if len(c.SpriteFolderPaths) == 0 {
-		return fmt.Errorf("at least one path required in assets_folder_paths")
+	if len(c.SpritesFoldersPaths) == 0 {
+		errs = append(errs, errors.New("at least one sprite folder path required"))
+	} else {
+		for _, path := range c.SpritesFoldersPaths {
+			if !filepath.IsAbs(path) {
+				errs = append(errs, fmt.Errorf("sprites path must be absolute: %s", path))
+			}
+		}
+	}
+
+	if len(c.PalettesFoldersPaths) > 0 {
+		for _, path := range c.PalettesFoldersPaths {
+			if !filepath.IsAbs(path) {
+				errs = append(errs, fmt.Errorf("palettes path must be absolute: %s", path))
+			}
+		}
 	}
 
 	if c.ScriptDirPath == "" {
-		return fmt.Errorf("missing required configuration: scripts_dir")
+		errs = append(errs, errors.New("missing required configuration: scripts_dir"))
+	} else if !filepath.IsAbs(c.ScriptDirPath) {
+		errs = append(errs, errors.New("scripts dir path need to be absolute"))
 	}
 
-	return nil
+	return multierr.Combine(errs...)
 }
 
 func saveConfig() error {
 	if err := viper.WriteConfig(); err != nil {
 		return fmt.Errorf("failed to persist configuration: %w", err)
 	}
+
 	return nil
 }

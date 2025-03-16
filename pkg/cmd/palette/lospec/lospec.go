@@ -37,10 +37,10 @@ func NewPaletteLospecCmd(env *environment.Environment) *cobra.Command {
 			if opts.FolderDestination == "" {
 				utils.PrintlnBold("⚠ no palettes folder specified, choosing first from config")
 
-				if len(cfg.PalettesFolderPaths) == 0 {
+				if len(cfg.PalettesFoldersPaths) == 0 {
 					return errors.New("❌ config palettes folders are not exists")
 				}
-				opts.FolderDestination = cfg.PalettesFolderPaths[0]
+				opts.FolderDestination = cfg.PalettesFoldersPaths[0]
 			}
 
 			err = ImportLospecPalettes(opts, args)

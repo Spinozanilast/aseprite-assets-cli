@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"net/url"
+	"path/filepath"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/help"
@@ -150,14 +151,14 @@ func InitialModel(config *config.Config) Model {
 		model.fields[AppPathFld].SetValue(config.AsepritePath)
 	}
 
-	if len(config.SpriteFolderPaths) != 0 {
+	if len(config.SpritesFoldersPaths) != 0 {
 		generate := model.FieldsGenerator(consts.Sprite)
-		generate(config.SpriteFolderPaths)
+		generate(config.SpritesFoldersPaths)
 	}
 
-	if len(config.PalettesFolderPaths) != 0 {
+	if len(config.PalettesFoldersPaths) != 0 {
 		generate := model.FieldsGenerator(consts.Palette)
-		generate(config.PalettesFolderPaths)
+		generate(config.PalettesFoldersPaths)
 	}
 
 	model.fields[OpenAiKeyFld].SetValue(config.OpenAiConfig.ApiKey)
@@ -290,7 +291,7 @@ func (m *Model) validateField(fld *inputField) {
 		return
 	}
 
-	if fldType == AppPathFld && files.CheckFileExists(value, false) {
+	if fldType == AppPathFld && files.CheckFileExists(value, false) && filepath.IsAbs(value) {
 		fld.status = statusValid
 	} else if fldType == OpenAiUrlFld {
 		_, err := url.ParseRequestURI(value)
@@ -301,7 +302,8 @@ func (m *Model) validateField(fld *inputField) {
 		if strings.HasPrefix(value, "sk-") {
 			fld.status = statusValid
 		}
-	} else if fldType.IsInTypes(AssetsFolderPathFld, PalettesFolderPathFld) && files.CheckFileExists(value, true) {
+	} else if (fldType).IsInTypes(AssetsFolderPathFld, PalettesFolderPathFld) &&
+		files.CheckFileExists(value, true) && filepath.IsAbs(value) {
 		fld.status = statusValid
 	} else {
 		fld.status = statusInvalid

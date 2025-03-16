@@ -23,7 +23,7 @@ Subcommands allow you to:
 
 	cmd.AddCommand(
 		edit.NewConfigEditCmd(env),
-		info.NewConfigOpenCmd(env),
+		info.NewConfigInfoCmd(env),
 		open.NewConfigOpenCmd(env),
 	)
 

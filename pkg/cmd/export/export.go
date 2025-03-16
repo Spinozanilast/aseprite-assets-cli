@@ -226,7 +226,7 @@ func (o *exportOptions) collectFramesInfo() error {
 func (o *exportOptions) spriteSuggestions(cfg *config.Config) func(string) []string {
 	return func(toComplete string) []string {
 		var suggestions []string
-		for _, folder := range cfg.SpriteFolderPaths {
+		for _, folder := range cfg.SpritesFoldersPaths {
 			fs, _ := files.FindFilesOfExtensionsRecursiveFlatten(folder, aseprite.SpritesExtensions()...)
 			for _, file := range fs {
 				if strings.HasPrefix(file, toComplete) {

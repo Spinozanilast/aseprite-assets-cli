@@ -95,9 +95,9 @@ func ConfirmActions() bool {
 func chooseAssetsDirs(assetsType consts.AssetsType, cfg *config.Config) []string {
 	switch assetsType {
 	case consts.Sprite:
-		return cfg.SpriteFolderPaths
+		return cfg.SpritesFoldersPaths
 	case consts.Palette:
-		return cfg.PalettesFolderPaths
+		return cfg.PalettesFoldersPaths
 	default:
 		return nil
 	}

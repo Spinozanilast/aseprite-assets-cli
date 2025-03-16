@@ -124,11 +124,11 @@ func (opts *ListOptions) validateListType() (ListType, error) {
 func (h *listHandler) specifyListParameters() error {
 	switch {
 	case h.listType&SpritesList != 0:
-		h.folders = h.config.SpriteFolderPaths
+		h.folders = h.config.SpritesFoldersPaths
 		h.extensions = aseprite.SpritesExtensions()
 		h.assetsType = consts.Sprite
 	case h.listType&PalettesList != 0:
-		h.folders = h.config.PalettesFolderPaths
+		h.folders = h.config.PalettesFoldersPaths
 		h.extensions = aseprite.PaletteExtensions()
 		h.assetsType = consts.Palette
 	default:

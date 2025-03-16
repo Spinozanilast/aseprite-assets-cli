@@ -279,7 +279,7 @@ func (h *paletteHandler) collectSaveOptions(opts *OutputOptions, transparencyEna
 				Message: "Directory to save palettes to:",
 				Default: "palettes",
 				Suggest: func(_ string) []string {
-					return h.config.PalettesFolderPaths
+					return h.config.PalettesFoldersPaths
 				},
 			},
 			Validate: func(val interface{}) error {

@@ -6,12 +6,13 @@ import (
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/environment"
 )
 
-func NewConfigOpenCmd(_ *environment.Environment) *cobra.Command {
+func NewConfigInfoCmd(cfg *environment.Environment) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "info",
 		Short: "Show current configuration",
 		Run: func(cmd *cobra.Command, args []string) {
-			config.Info()
+
+			print(config.Info())
 		},
 	}
 

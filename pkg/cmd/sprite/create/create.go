@@ -153,7 +153,7 @@ func createAssetQuestions(dirs []string) []*survey.Question {
 
 func (h *spriteCreationHandler) collectCreateOptions() (*SpriteCreateOptions, error) {
 	opts := &SpriteCreateOptions{}
-	err := survey.Ask(createAssetQuestions(h.config.SpriteFolderPaths), opts)
+	err := survey.Ask(createAssetQuestions(h.config.SpritesFoldersPaths), opts)
 
 	if err != nil {
 		return nil, err
