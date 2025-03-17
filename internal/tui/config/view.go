@@ -63,18 +63,18 @@ func (m Model) renderInputField(field *inputField, label string, idx int) string
 
 	if isActive {
 		switch field.status {
-		case statusValid:
+		case StatusValid:
 			style = m.styles.ValidActiveInput
-		case statusInvalid:
+		case StatusInvalid:
 			style = m.styles.InvalidActiveInput
 		default:
 			style = m.styles.NeutralActiveInput
 		}
 	} else {
 		switch field.status {
-		case statusValid:
+		case StatusValid:
 			style = m.styles.ValidInput
-		case statusInvalid:
+		case StatusInvalid:
 			style = m.styles.InvalidInput
 		default:
 			style = m.styles.NeutralInput

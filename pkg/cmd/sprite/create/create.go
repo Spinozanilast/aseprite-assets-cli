@@ -66,7 +66,7 @@ func NewSpriteCreateCmd(env *environment.Environment) *cobra.Command {
 }
 
 func (h *spriteCreationHandler) createAsset(opts *SpriteCreateOptions) error {
-	aseCli := aseprite.NewCLI(h.config.AsepritePath, h.config.ScriptDirPath)
+	aseCli := aseprite.NewCLI(h.config.AsepritePath, h.config.ScriptDirPath, h.config.FromSteam)
 	err := aseCli.CheckPrerequisites()
 	if err != nil {
 		return err

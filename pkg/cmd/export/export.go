@@ -66,7 +66,7 @@ func NewExportCmd(env *environment.Environment) *cobra.Command {
 			h := &exportHandler{
 				config:      cfg,
 				options:     options,
-				asepriteCli: aseprite.NewCLI(cfg.AsepritePath, cfg.ScriptDirPath),
+				asepriteCli: aseprite.NewCLI(cfg.AsepritePath, cfg.ScriptDirPath, cfg.FromSteam),
 			}
 
 			if h.options.needsSurvey() {

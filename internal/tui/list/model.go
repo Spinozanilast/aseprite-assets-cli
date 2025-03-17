@@ -1,17 +1,14 @@
 package list
 
 import (
-	"path/filepath"
-
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spinozanilast/aseprite-assets-cli/internal/tui/info"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/aseprite"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/consts"
-	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils/files"
-
-	tea "github.com/charmbracelet/bubbletea"
+	"path/filepath"
 )
 
 type folderNavigation struct {
@@ -30,8 +27,6 @@ type Model struct {
 	assetsFolders []AssetSource
 	assetsActive  []int
 
-	asepriteCli *aseprite.Cli
-
 	nav folderNavigation
 
 	title  string
@@ -41,9 +36,12 @@ type Model struct {
 	err         string
 	quitting    bool
 	windowWidth int
+
+	openAsset           func(string) error
+	openActionAvailable bool
 }
 
-func NewModel(p ListParams) Model {
+func NewModel(p ListParams, openAssetFunc func(string) error, fromSteam bool) Model {
 	h := help.New()
 	h.ShowAll = true
 
@@ -57,21 +55,25 @@ func NewModel(p ListParams) Model {
 	listLayoutStyles := DefaultListLayoutStyles()
 	listModel := list.New(items, itemDelegate{}, listLayoutStyles.ListWidth, listLayoutStyles.ListHeight)
 
-	cli := aseprite.NewCLI(p.AppPath, p.ScriptsPath)
+	cli := aseprite.NewCLI(p.AppPath, p.ScriptsPath, fromSteam)
 	infoModel := info.NewInfoModel(cli)
 
+	modelKeys := keys
+	modelKeys.showEnter = p.OpenActionAvailable
+
 	return Model{
-		list:          listModel,
-		infoPanel:     infoModel,
-		nav:           nav,
-		asepriteCli:   cli,
-		assetsFolders: p.AssetsFolders,
-		assetsActive:  assetsActive,
-		assetsType:    p.AssetsType,
-		styles:        DefaultStyles(),
-		title:         p.Title,
-		keys:          keys,
-		help:          h,
+		list:                listModel,
+		infoPanel:           infoModel,
+		nav:                 nav,
+		assetsActive:        assetsActive,
+		styles:              DefaultStyles(),
+		assetsFolders:       p.AssetsFolders,
+		assetsType:          p.AssetsType,
+		title:               p.Title,
+		openActionAvailable: p.OpenActionAvailable,
+		keys:                modelKeys,
+		help:                h,
+		openAsset:           openAssetFunc,
 	}
 }
 
@@ -142,7 +144,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) handleEnterKey() (tea.Model, tea.Cmd) {
-	files.OpenFileWith(m.currentItemFilename(), m.asepriteCli.AsepritePath)
+	if !m.openActionAvailable {
+		return m, nil
+	}
+
+	err := m.openAsset(m.currentItemFilename())
+
+	if err != nil {
+		m.err = err.Error()
+	}
+
 	return m, nil
 }
 

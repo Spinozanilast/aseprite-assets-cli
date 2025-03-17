@@ -39,8 +39,8 @@ const (
 )
 
 const (
-	statusValid   = "valid"
-	statusInvalid = "invalid"
+	StatusValid   = "valid"
+	StatusInvalid = "invalid"
 	statusNeutral = "neutral"
 )
 
@@ -57,6 +57,7 @@ const (
 type Model struct {
 	state            AppState
 	fields           []*inputField
+	cfgFromSteam     bool
 	activeFieldIndex int
 	quitting         bool
 	styles           *Styles
@@ -163,6 +164,8 @@ func InitialModel(config *config.Config) Model {
 
 	model.fields[OpenAiKeyFld].SetValue(config.OpenAiConfig.ApiKey)
 	model.fields[OpenAiUrlFld].SetValue(config.OpenAiConfig.ApiUrl)
+
+	model.cfgFromSteam = config.FromSteam
 
 	model.validateAllFields()
 
@@ -283,30 +286,36 @@ func (m *Model) validateField(fld *inputField) {
 		return
 	}
 
-	value := fld.Value()
-	fldType := fld.fldType
+	value := strings.TrimSpace(fld.Value())
 
-	if strings.TrimSpace(value) == "" || value == "\\" {
-		fld.status = statusInvalid
+	if value == "" || value == "\\" {
+		fld.status = StatusInvalid
 		return
 	}
 
-	if fldType == AppPathFld && files.CheckFileExists(value, false) && filepath.IsAbs(value) {
-		fld.status = statusValid
-	} else if fldType == OpenAiUrlFld {
-		_, err := url.ParseRequestURI(value)
-		if err == nil {
-			fld.status = statusValid
+	fldType := fld.fldType
+	fld.status = StatusInvalid
+
+	switch {
+	case fldType == AppPathFld:
+		if filepath.IsAbs(value) && files.CheckFileExists(value, false) {
+			fld.status = StatusValid
 		}
-	} else if fldType == OpenAiKeyFld {
-		if strings.HasPrefix(value, "sk-") {
-			fld.status = statusValid
+
+	case fldType == OpenAiUrlFld:
+		if _, err := url.ParseRequestURI(value); err == nil {
+			fld.status = StatusValid
 		}
-	} else if (fldType).IsInTypes(AssetsFolderPathFld, PalettesFolderPathFld) &&
-		files.CheckFileExists(value, true) && filepath.IsAbs(value) {
-		fld.status = statusValid
-	} else {
-		fld.status = statusInvalid
+
+	case fldType == OpenAiKeyFld:
+		if strings.HasPrefix(value, "sk-") && len(value) >= 20 {
+			fld.status = StatusValid
+		}
+
+	case fldType.IsInTypes(AssetsFolderPathFld, PalettesFolderPathFld):
+		if filepath.IsAbs(value) && files.CheckFileExists(value, true) {
+			fld.status = StatusValid
+		}
 	}
 }
 
@@ -327,7 +336,7 @@ func (m *Model) handleEnterKey() (tea.Model, tea.Cmd) {
 		return m.handleBrowse()
 	}
 
-	if current.status == statusValid {
+	if current.status == StatusValid {
 		return m.moveFocus(Down), nil
 	}
 
@@ -447,7 +456,7 @@ func (m *Model) ToConfig() error {
 	openAiKeyFld := m.fields[OpenAiKeyFld]
 	openAiUrlFld := m.fields[OpenAiUrlFld]
 
-	if openAiKeyFld.status == statusValid || openAiUrlFld.status == statusValid {
+	if openAiKeyFld.status == StatusValid || openAiUrlFld.status == StatusValid {
 		openAiKey := m.fields[OpenAiKeyFld].Value()
 		openAiUrl := m.fields[OpenAiUrlFld].Value()
 		config.SetOpenAiConfig(openAiKey, openAiUrl)
@@ -460,7 +469,7 @@ func (m *Model) allFieldsValid() bool {
 	for _, field := range m.fields {
 		// Open Ai fields are optional
 		isOpenAiFld := field.fldType.IsInTypes(OpenAiKeyFld, OpenAiUrlFld)
-		if field.status != statusValid && !isOpenAiFld {
+		if field.status != StatusValid && !isOpenAiFld {
 			return false
 		}
 	}
@@ -491,7 +500,7 @@ func (m *Model) checkFieldsDuplicatesExist() (bool, error) {
 	uniqueDirs := make(map[string]struct{})
 
 	for _, field := range m.fields {
-		if field.status == statusValid && field.fldType.IsInTypes(AssetsFolderPathFld, PalettesFolderPathFld) {
+		if field.status == StatusValid && field.fldType.IsInTypes(AssetsFolderPathFld, PalettesFolderPathFld) {
 			dir := field.Value()
 			uniqueDirs[dir] = struct{}{}
 		}

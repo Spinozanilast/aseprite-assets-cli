@@ -76,7 +76,7 @@ func validateInput(filename string) error {
 }
 
 func initializeGenerator(cfg *config.Config) *preview.Generator {
-	aseCli := aseprite.NewCLI(cfg.AsepritePath, cfg.ScriptDirPath)
+	aseCli := aseprite.NewCLI(cfg.AsepritePath, cfg.ScriptDirPath, cfg.FromSteam)
 	return preview.NewGenerator(aseCli)
 }
 

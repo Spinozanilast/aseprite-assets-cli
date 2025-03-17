@@ -81,7 +81,7 @@ func NewPaletteCreateCmd(env *environment.Environment) *cobra.Command {
 				handler := &paletteHandler{
 					config:       cfg,
 					openAiClient: openaiClient,
-					asepriteCli:  aseprite.NewCLI(cfg.AsepritePath, cfg.ScriptDirPath),
+					asepriteCli:  aseprite.NewCLI(cfg.AsepritePath, cfg.ScriptDirPath, cfg.FromSteam),
 					availableModels: []string{
 						openai.GPT3Dot5Turbo,
 						openai.GPT4oMini,
@@ -360,9 +360,7 @@ func (h *paletteHandler) savePalette(outputOpts *OutputOptions, paletteOpts *Pal
 	utils.PrintFormatted("Generated palette was saved to %s\n", outputPath)
 
 	if outputOpts.PaletteSaveVariant != SaveFile {
-		cli := aseprite.NewCLI(h.config.AsepritePath, h.config.ScriptDirPath)
-
-		err := cli.ExecuteCommand(&commands.SavePalette{
+		err := h.asepriteCli.ExecuteCommand(&commands.SavePalette{
 			PresetName:      outputOpts.PresetName,
 			PaletteFilename: outputPath,
 		})

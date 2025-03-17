@@ -1,5 +1,9 @@
 package aseprite
 
+const (
+	Name = "Aseprite"
+)
+
 type ColorMode string
 
 const (

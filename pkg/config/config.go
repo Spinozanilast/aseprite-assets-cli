@@ -3,6 +3,8 @@ package config
 import (
 	"errors"
 	"fmt"
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/aseprite"
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/steam"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils/files"
 	"go.uber.org/multierr"
 	"os"
@@ -19,6 +21,8 @@ const (
 	configName = ".aseprite-assets-cli"
 	configType = "json"
 
+	fromSteamKey    = "from_steam"
+	appIdKey        = "app_id"
 	asepritePathKey = "aseprite_path"
 	scriptDirKey    = "scripts_dir"
 	spriteDirsKey   = "assets_folder_paths"
@@ -32,6 +36,9 @@ type OpenAiConfig struct {
 }
 
 type Config struct {
+	FromSteam bool `mapstructure:"from_steam" json:"from_steam"`
+	// It could be the aseprite filename or steam id of aseprite path
+	AppId                string       `mapstructure:"app_id" json:"app_id"`
 	AsepritePath         string       `mapstructure:"aseprite_path"`
 	SpritesFoldersPaths  []string     `mapstructure:"assets_folder_paths"`
 	ScriptDirPath        string       `mapstructure:"scripts_dir"`
@@ -55,6 +62,7 @@ func LoadConfig() (*Config, error) {
 
 func Info() string {
 	var settingsBuilder strings.Builder
+
 	for key, value := range viper.AllSettings() {
 		settingsBuilder.WriteString(fmt.Sprintf("\t%v: %v\n", key, value))
 	}
@@ -107,7 +115,11 @@ func initConfig() error {
 	viper.AddConfigPath(homeDir)
 
 	pwd, _ := os.Getwd()
-	viper.SetDefault(asepritePathKey, os.Getenv("ASEPRITE"))
+	asePath, appId, fromSteam := findAsepritePath()
+
+	viper.SetDefault(fromSteamKey, fromSteam)
+	viper.SetDefault(appIdKey, appId)
+	viper.SetDefault(asepritePathKey, asePath)
 	viper.SetDefault(scriptDirKey, filepath.Join(pwd, "scripts"))
 	viper.SetDefault(spriteDirsKey, "")
 	viper.SetDefault(palettesDirsKey, "")
@@ -133,6 +145,7 @@ func (c *Config) Validate() error {
 
 	if c.AsepritePath == "" {
 		errs = append(errs, errors.New("missing required configuration: aseprite_path"))
+	} else if c.FromSteam && len(c.AsepritePath) > 0 {
 	} else if !filepath.IsAbs(c.AsepritePath) || (runtime.GOOS == "windows" && !files.CheckFileExtension(c.AsepritePath, "exe")) {
 		errs = append(errs, errors.New("aseprite path need to be absolute executable path"))
 	}
@@ -162,6 +175,17 @@ func (c *Config) Validate() error {
 	}
 
 	return multierr.Combine(errs...)
+}
+
+func findAsepritePath() (asePath string, appId string, fromSteam bool) {
+	steamPath, _ := steam.FindSteamPath()
+	aseSteamInfo, _ := steam.FindAppByName(steamPath, aseprite.Name, aseprite.Name)
+
+	if aseSteamInfo == nil {
+		return os.Getenv("ASEPRITE"), "", false
+	}
+
+	return aseSteamInfo.Executable, aseSteamInfo.AppID, true
 }
 
 func saveConfig() error {
