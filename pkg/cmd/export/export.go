@@ -66,7 +66,7 @@ func NewExportCmd(env *environment.Environment) *cobra.Command {
 			h := &exportHandler{
 				config:      cfg,
 				options:     options,
-				asepriteCli: aseprite.NewCLI(cfg.AsepritePath, cfg.ScriptDirPath),
+				asepriteCli: aseprite.NewCLI(cfg.AsepritePath, cfg.ScriptDirPath, cfg.FromSteam),
 			}
 
 			if h.options.needsSurvey() {
@@ -230,7 +230,7 @@ func (o *exportOptions) spriteSuggestions(cfg *config.Config) func(string) []str
 			fs, _ := files.FindFilesOfExtensionsRecursiveFlatten(folder, aseprite.SpritesExtensions()...)
 			for _, file := range fs {
 				if strings.HasPrefix(file, toComplete) {
-					suggestions = append(suggestions, file)
+					suggestions = append(suggestions)
 				}
 			}
 		}

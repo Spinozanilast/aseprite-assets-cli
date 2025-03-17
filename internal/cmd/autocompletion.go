@@ -10,7 +10,7 @@ import (
 type AutocompletionFunc func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective)
 
 func GenerateFilesAutoCompletions(folders []string, extensions []string) AutocompletionFunc {
-	return func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	return func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		wg := new(sync.WaitGroup)
 		var completions []string
 
@@ -26,6 +26,7 @@ func GenerateFilesAutoCompletions(folders []string, extensions []string) Autocom
 			}(dir)
 		}
 		wg.Wait()
+
 		return completions, cobra.ShellCompDirectiveNoFileComp
 	}
 }

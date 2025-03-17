@@ -54,6 +54,7 @@ func FindFilesOfExtensionsRecursive(folderPath string, extensions ...string) (ma
 		}
 
 		fileExt := strings.ToLower(filepath.Ext(path))
+
 		if extMap[fileExt] {
 			dir := filepath.Dir(path)
 			results[dir] = append(results[dir], filepath.Base(path))
@@ -85,6 +86,7 @@ func FindFilesOfExtensionsRecursiveFlatten(folderPath string, extensions ...stri
 		}
 
 		fileExt := strings.ToLower(filepath.Ext(path))
+
 		if extMap[fileExt] {
 			results = append(results, path)
 		}

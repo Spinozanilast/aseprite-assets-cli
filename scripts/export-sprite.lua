@@ -16,6 +16,7 @@ Requires Aseprite CLI parameters:
   --format           Output file format
   --sizes            Comma-separated size list (WxH)
   --scales           Comma-separated scale factors
+  --frames_included range of included frames to export
 ]]
 
 local FRAMES_INCLUDED_SEPARATOR = ":"
@@ -223,3 +224,4 @@ local function error_handler(error)
 end
 
 xpcall(main, error_handler)
+

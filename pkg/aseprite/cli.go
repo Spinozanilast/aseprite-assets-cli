@@ -7,40 +7,47 @@ import (
 )
 
 type Cli struct {
-	AsepritePath   string
+	AsePath        string
 	ScriptsDirPath string
+	FromSteam      bool
 }
 
-func NewCLI(asepritePath string, scriptsDirPath string) *Cli {
+type SteamInfo struct {
+	AppId string
+}
+
+func NewCLI(asePath string, scriptsDirPath string, fromSteam bool) *Cli {
 	return &Cli{
-		AsepritePath:   asepritePath,
+		AsePath:        asePath,
 		ScriptsDirPath: scriptsDirPath,
+		FromSteam:      fromSteam,
 	}
 }
 
-func (a *Cli) CheckPrerequisites() error {
-	cmd := exec.Command(a.AsepritePath, "--version")
+func (ac *Cli) CheckPrerequisites() error {
+	cmd := exec.Command(ac.AsePath, "--version")
 	_, err := cmd.CombinedOutput()
 	return err
 }
 
-func (a *Cli) Execute(scriptName string, args []string) (string, error) {
-	scriptPath := filepath.Join(a.ScriptsDirPath, scriptName)
+func (ac *Cli) Execute(scriptName string, args []string) (string, error) {
+	scriptPath := filepath.Join(ac.ScriptsDirPath, scriptName)
 	args = append(args, "--script", scriptPath)
 
-	cmd := exec.Command(a.AsepritePath, args...)
+	cmd := exec.Command(ac.AsePath, args...)
 
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return "", fmt.Errorf("error executing aseprite command: %v\n%s", err, output)
 	}
+
 	return string(output), nil
 }
 
-func (a *Cli) ExecuteCommand(command Command) error {
+func (ac *Cli) ExecuteCommand(command Command) error {
 	args := command.Args()
 
-	_, err := a.Execute(command.ScriptName(), args)
+	_, err := ac.Execute(command.ScriptName(), args)
 
 	if err != nil {
 		return err
@@ -49,10 +56,10 @@ func (a *Cli) ExecuteCommand(command Command) error {
 	return nil
 }
 
-func (a *Cli) ExecuteCommandOutput(command Command) (string, error) {
+func (ac *Cli) ExecuteCommandOutput(command Command) (string, error) {
 	args := command.Args()
 
-	output, err := a.Execute(command.ScriptName(), args)
+	output, err := ac.Execute(command.ScriptName(), args)
 
 	if err != nil {
 		return "", err

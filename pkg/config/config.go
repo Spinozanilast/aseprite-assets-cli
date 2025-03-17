@@ -3,6 +3,8 @@ package config
 import (
 	"errors"
 	"fmt"
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/aseprite"
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/steam"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils/files"
 	"go.uber.org/multierr"
 	"os"
@@ -19,6 +21,8 @@ const (
 	configName = ".aseprite-assets-cli"
 	configType = "json"
 
+	fromSteamKey    = "from_steam"
+	appIdKey        = "app_id"
 	asepritePathKey = "aseprite_path"
 	scriptDirKey    = "scripts_dir"
 	spriteDirsKey   = "assets_folder_paths"
@@ -32,10 +36,12 @@ type OpenAiConfig struct {
 }
 
 type Config struct {
+	FromSteam            bool         `mapstructure:"from_steam" json:"from_steam"`
+	AppId                string       `mapstructure:"app_id" json:"app_id"`
 	AsepritePath         string       `mapstructure:"aseprite_path"`
 	SpritesFoldersPaths  []string     `mapstructure:"assets_folder_paths"`
-	ScriptDirPath        string       `mapstructure:"scripts_dir"`
 	PalettesFoldersPaths []string     `mapstructure:"palettes_folder_paths"`
+	ScriptDirPath        string       `mapstructure:"scripts_dir"`
 	OpenAiConfig         OpenAiConfig `mapstructure:"open_ai_api"`
 }
 
@@ -55,6 +61,7 @@ func LoadConfig() (*Config, error) {
 
 func Info() string {
 	var settingsBuilder strings.Builder
+
 	for key, value := range viper.AllSettings() {
 		settingsBuilder.WriteString(fmt.Sprintf("\t%v: %v\n", key, value))
 	}
@@ -93,48 +100,17 @@ func SetOpenAiConfig(apiKey string, apiUrl string) error {
 	return saveConfig()
 }
 
-func initConfig() error {
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return fmt.Errorf("failed to determine home directory: %w", err)
-	}
-
-	viper.AutomaticEnv()
-	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-
-	viper.SetConfigName(configName)
-	viper.SetConfigType(configType)
-	viper.AddConfigPath(homeDir)
-
-	pwd, _ := os.Getwd()
-	viper.SetDefault(asepritePathKey, os.Getenv("ASEPRITE"))
-	viper.SetDefault(scriptDirKey, filepath.Join(pwd, "scripts"))
-	viper.SetDefault(spriteDirsKey, "")
-	viper.SetDefault(palettesDirsKey, "")
-	viper.SetDefault(openAiConfigKey, OpenAiConfig{
-		ApiUrl: openAiApiUrl,
-		ApiKey: os.Getenv("OPENAI_API_KEY"),
-	})
-
-	if err := viper.ReadInConfig(); err != nil {
-		var configNotFound viper.ConfigFileNotFoundError
-		if errors.As(err, &configNotFound) {
-			if err := viper.SafeWriteConfig(); err != nil {
-				return fmt.Errorf("failed to write initial config: %w", err)
-			}
-		}
-	}
-
-	return nil
-}
-
 func (c *Config) Validate() error {
 	var errs []error
 
-	if c.AsepritePath == "" {
-		errs = append(errs, errors.New("missing required configuration: aseprite_path"))
-	} else if !filepath.IsAbs(c.AsepritePath) || (runtime.GOOS == "windows" && !files.CheckFileExtension(c.AsepritePath, "exe")) {
-		errs = append(errs, errors.New("aseprite path need to be absolute executable path"))
+	if c.FromSteam && c.AppId == "" {
+		errs = append(errs, errors.New("missing Steam AppID when using Steam configuration"))
+	} else {
+		if c.AsepritePath == "" {
+			errs = append(errs, errors.New("missing required configuration: aseprite_path"))
+		} else if !filepath.IsAbs(c.AsepritePath) || (runtime.GOOS == "windows" && !files.CheckFileExtension(c.AsepritePath, "exe")) {
+			errs = append(errs, errors.New("aseprite path must be absolute executable path"))
+		}
 	}
 
 	if len(c.SpritesFoldersPaths) == 0 {
@@ -162,6 +138,62 @@ func (c *Config) Validate() error {
 	}
 
 	return multierr.Combine(errs...)
+}
+
+func TryFindAsepritePath() (asePath string, appId string, fromSteam bool) {
+	// Check environment variable first
+	if envPath := os.Getenv("ASEPRITE"); envPath != "" {
+		return envPath, "", false
+	}
+
+	// Fallback to Steam detection
+	steamPath, _ := steam.FindSteamPath()
+	aseSteamInfo, _ := steam.FindAppByName(steamPath, aseprite.Name, aseprite.Name)
+
+	if aseSteamInfo == nil {
+		return "", "", false
+	}
+
+	return aseSteamInfo.Executable, aseSteamInfo.AppID, true
+}
+
+func initConfig() error {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("failed to determine home directory: %w", err)
+	}
+
+	viper.AutomaticEnv()
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+
+	viper.SetConfigName(configName)
+	viper.SetConfigType(configType)
+	viper.AddConfigPath(homeDir)
+
+	pwd, _ := os.Getwd()
+	asePath, appId, fromSteam := TryFindAsepritePath()
+
+	viper.SetDefault(fromSteamKey, fromSteam)
+	viper.SetDefault(appIdKey, appId)
+	viper.SetDefault(asepritePathKey, asePath)
+	viper.SetDefault(scriptDirKey, filepath.Join(pwd, "scripts"))
+	viper.SetDefault(spriteDirsKey, "")
+	viper.SetDefault(palettesDirsKey, "")
+	viper.SetDefault(openAiConfigKey, OpenAiConfig{
+		ApiUrl: openAiApiUrl,
+		ApiKey: os.Getenv("OPENAI_API_KEY"),
+	})
+
+	if err := viper.ReadInConfig(); err != nil {
+		var configNotFound viper.ConfigFileNotFoundError
+		if errors.As(err, &configNotFound) {
+			if err := viper.SafeWriteConfig(); err != nil {
+				return fmt.Errorf("failed to write initial config: %w", err)
+			}
+		}
+	}
+
+	return nil
 }
 
 func saveConfig() error {

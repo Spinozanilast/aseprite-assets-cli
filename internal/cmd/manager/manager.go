@@ -3,14 +3,14 @@ package manager
 import (
 	"errors"
 	"fmt"
-
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
-	autocomp "github.com/spinozanilast/aseprite-assets-cli/internal/cmd"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/config"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/consts"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/environment"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils/files"
+
+	autocomp "github.com/spinozanilast/aseprite-assets-cli/internal/cmd"
 )
 
 type Params struct {

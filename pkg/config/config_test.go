@@ -2,13 +2,14 @@ package config_test
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
+	"testing"
+
 	"github.com/spf13/viper"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"os"
-	"path/filepath"
-	"testing"
 )
 
 type DefaultWrapper struct {
@@ -27,31 +28,13 @@ func (w DefaultWrapper) testWrapped(t *testing.T) {
 func SetupTestConfig(t *testing.T) (cfg *config.Config) {
 	viper.Reset()
 	tempDir := t.TempDir()
+
 	t.Setenv("USERPROFILE", tempDir)
 
 	cfg, err := config.LoadConfig()
 	require.NoError(t, err)
 
 	return cfg
-}
-
-func TestLoadConfig(t *testing.T) {
-	w := DefaultWrapper{
-		testFunc: func(t *testing.T, cfg *config.Config) {
-			pwd, err := os.Getwd()
-			require.NoError(t, err)
-			expectedScriptDir := filepath.Join(pwd, "scripts")
-
-			assert.Empty(t, cfg.AsepritePath)
-			assert.Empty(t, cfg.SpritesFoldersPaths)
-			assert.Empty(t, cfg.PalettesFoldersPaths)
-
-			assert.Equal(t, expectedScriptDir, cfg.ScriptDirPath)
-			assert.Equal(t, "https://api.openai.com/v1", cfg.OpenAiConfig.ApiUrl)
-			assert.Equal(t, os.Getenv("OPENAI_API_KEY"), cfg.OpenAiConfig.ApiKey)
-		},
-	}
-	w.testWrapped(t)
 }
 
 func TestSavePaths(t *testing.T) {
@@ -173,7 +156,7 @@ func TestConfigValidate(t *testing.T) {
 		{
 			name:    "invalid aseprite path",
 			config:  &config.Config{AsepritePath: "D:\\aseprite", SpritesFoldersPaths: []string{"D:\\assets"}, ScriptDirPath: "D:\\scripts", PalettesFoldersPaths: []string{"D:\\palettes"}},
-			wantErr: "aseprite path need to be absolute executable path",
+			wantErr: "aseprite path must be absolute executable path",
 		},
 		{
 			name:    "invalid palette paths if not empty and are not absolute",

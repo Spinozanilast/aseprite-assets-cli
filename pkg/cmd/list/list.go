@@ -23,18 +23,20 @@ const (
 )
 
 type ListOptions struct {
-	Config      func() (*config.Config, error)
-	Recursive   bool
-	SpriteList  bool
-	PaletteList bool
+	Config         func() (*config.Config, error)
+	Recursive      bool
+	SpriteList     bool
+	PaletteList    bool
+	StartWithSteam bool
 }
 
 type listHandler struct {
-	config     *config.Config
-	listType   ListType
-	extensions []string
-	folders    []string
-	assetsType consts.AssetsType
+	config              *config.Config
+	listType            ListType
+	extensions          []string
+	folders             []string
+	assetsType          consts.AssetsType
+	openActionAvailable bool
 }
 
 func NewListCmd(env *environment.Environment) *cobra.Command {
@@ -53,6 +55,7 @@ func NewListCmd(env *environment.Environment) *cobra.Command {
 
 	cmd.Flags().BoolVarP(&opts.Recursive, "recursive", "r", false, "recursive search for selected source")
 	cmd.Flags().BoolVarP(&opts.SpriteList, "sprites", "s", false, "list sprites")
+	cmd.Flags().BoolVarP(&opts.StartWithSteam, "steam", "t", false, "start with steam")
 	cmd.Flags().BoolVarP(&opts.PaletteList, "palettes", "p", false, "list palettes")
 
 	return cmd
@@ -84,14 +87,15 @@ func runList(opts *ListOptions) error {
 	}
 
 	listParams := list.ListParams{
-		Title:         WriteTitle(handler.listType),
-		AppPath:       cfg.AsepritePath,
-		ScriptsPath:   cfg.ScriptDirPath,
-		AssetsType:    handler.assetsType,
-		AssetsFolders: sources,
+		Title:               WriteTitle(handler.listType),
+		AppPath:             cfg.AsepritePath,
+		ScriptsPath:         cfg.ScriptDirPath,
+		AssetsType:          handler.assetsType,
+		AssetsFolders:       sources,
+		OpenActionAvailable: handler.openActionAvailable,
 	}
 
-	if err = tui.StartListTui(listParams); err != nil {
+	if err = tui.StartListTui(listParams, cfg, opts.StartWithSteam); err != nil {
 		return err
 	}
 
@@ -127,10 +131,12 @@ func (h *listHandler) specifyListParameters() error {
 		h.folders = h.config.SpritesFoldersPaths
 		h.extensions = aseprite.SpritesExtensions()
 		h.assetsType = consts.Sprite
+		h.openActionAvailable = true
 	case h.listType&PalettesList != 0:
 		h.folders = h.config.PalettesFoldersPaths
 		h.extensions = aseprite.PaletteExtensions()
 		h.assetsType = consts.Palette
+		h.openActionAvailable = false
 	default:
 		return fmt.Errorf("invalid list type configuration")
 	}
