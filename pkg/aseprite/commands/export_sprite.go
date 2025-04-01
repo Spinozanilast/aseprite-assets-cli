@@ -3,12 +3,13 @@ package commands
 import "github.com/spinozanilast/aseprite-assets-cli/pkg/aseprite"
 
 type ExportSprite struct {
-	SpriteFilename string `script:"sprite-filename" format:"quotes"`
-	OutputFilename string `script:"output-filename" format:"quotes"`
-	FramesIncluded string `script:"frames-included"`
-	Format         string
-	Sizes          string
-	Scales         string
+	SpriteFilename    string `script:"sprite-filename" format:"quotes"`
+	OutputFilename    string `script:"output-filename" format:"quotes"`
+	FramesIncluded    string `script:"frames-included"`
+	SelectedLayerName string `script:"layer-selected" format:"quotes"`
+	Format            string
+	Sizes             string
+	Scales            string
 }
 
 func (c *ExportSprite) ScriptName() string {

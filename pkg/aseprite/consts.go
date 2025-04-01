@@ -1,7 +1,8 @@
 package aseprite
 
 const (
-	Name = "Aseprite"
+	Name                 = "Aseprite"
+	ScriptsHelpersFolder = "helpers"
 )
 
 type ColorMode string

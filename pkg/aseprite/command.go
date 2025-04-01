@@ -6,12 +6,12 @@ import (
 	"strings"
 )
 
-const AsepriteScriptParamArg = "--script-param"
+const ScriptParamArg = "--script-param"
 const BatchModeProperty = "BatchMode"
 
 type Command interface {
-	Args() []string
 	ScriptName() string
+	Args() []string
 }
 
 func CreateArgsFromStruct(s interface{}) []string {
@@ -63,5 +63,5 @@ func CreateArgsFromStruct(s interface{}) []string {
 }
 
 func createScriptArgs(key string, value any) []string {
-	return []string{AsepriteScriptParamArg, fmt.Sprintf("%s=%v", key, value)}
+	return []string{ScriptParamArg, fmt.Sprintf("%s=%v", key, value)}
 }

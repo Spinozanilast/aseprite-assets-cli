@@ -27,6 +27,8 @@ local output_filename = app.params["output-filename"]
 local format = app.params["format"]
 
 local frames_included = app.params["frames-included"]
+-- selected layer name
+local selected_layer = app.params["layer-selected"]
 local sizes = app.params["sizes"]
 local scales = app.params["scales"]
 
@@ -169,6 +171,14 @@ local function save_sized_versions(sprite, base_path, sizes_set, from_frame, to_
     app.sprite = original_sprite
 end
 
+local function toggle_other_layers_visibility(sprite, selected_layer_name, visible)
+    for _, layer in ipairs(sprite.layers) do
+        if layer.name ~= selected_layer_name then
+            layer.isVisible = visible
+        end
+    end
+end
+
 local function main()
     validate_parameters()
 
@@ -183,9 +193,16 @@ local function main()
 
     if not sprite then
         if emptyFilename then
-            error("Active sprite is not exists (open sprite in Aseprite)")
+            error("Active sprite does not exist (open a sprite in Aseprite)")
         end
         error("Failed to load sprite: " .. sprite_filename)
+    end
+
+    -- **Handle layer selection**
+    local restore_visibility = false
+    if selected_layer and selected_layer ~= "" then
+        toggle_other_layers_visibility(sprite, selected_layer, false)
+        restore_visibility = true
     end
 
     local base_output = output_filename or
@@ -200,11 +217,7 @@ local function main()
             fromFrame = from_frame,
             toFrame = to_frame
         }
-        sprite:close()
-        return
-    end
-
-    if scales then
+    elseif scales then
         local scale_list = parse_comma_list(scales, function(s)
             return tonumber(s) and true or false
         end)
@@ -214,6 +227,11 @@ local function main()
             return s:match("^%d+x%d+$") and true or false
         end)
         save_sized_versions(sprite, base_output, size_list, from_frame, to_frame)
+    end
+
+    -- **Restore layer visibility**
+    if restore_visibility then
+        toggle_other_layers_visibility(sprite, selected_layer, true)
     end
 
     sprite:close()

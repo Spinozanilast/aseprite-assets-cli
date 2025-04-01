@@ -3,18 +3,20 @@ package export
 import (
 	"errors"
 	"fmt"
+	"slices"
+	"strconv"
+	"strings"
+
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/MakeNowJust/heredoc/v2"
 	"github.com/spf13/cobra"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/aseprite"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/aseprite/commands"
+	"github.com/spinozanilast/aseprite-assets-cli/pkg/aseprite/commands/helpers"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/config"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/environment"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils"
 	"github.com/spinozanilast/aseprite-assets-cli/pkg/utils/files"
-	"slices"
-	"strconv"
-	"strings"
 )
 
 type SpriteScaleMode string
@@ -25,15 +27,17 @@ const (
 )
 
 type exportHandler struct {
-	config      *config.Config
-	options     *exportOptions
-	asepriteCli *aseprite.Cli
+	config       *config.Config
+	asepriteCli  *aseprite.Cli
+	options      *exportOptions
+	spriteLayers []string
 }
 
 type exportOptions struct {
 	SpriteFilename string `survey:"sprite-filename"`
 	OutputFilename string `survey:"output-filename"`
 	FramesIncluded string `survey:"frames-included"`
+	SelectedLayer  string
 	Format         string
 	Sizes          string
 	Scales         string
@@ -71,7 +75,7 @@ func NewExportCmd(env *environment.Environment) *cobra.Command {
 
 			if h.options.needsSurvey() {
 				utils.PrintlnBold("Do not have enough data to export sprite\n")
-				if err := h.options.collect(cfg); err != nil {
+				if err := h.collect(); err != nil {
 					return err
 				}
 			}
@@ -87,11 +91,64 @@ func NewExportCmd(env *environment.Environment) *cobra.Command {
 	cmd.Flags().StringVarP(&options.SpriteFilename, "sprite-filename", "s", "", "aseprite asset filename")
 	cmd.Flags().StringVarP(&options.OutputFilename, "output-filename", "o", "", "output filename")
 	cmd.Flags().StringVarP(&options.Format, "format", "f", "", "output format")
+	cmd.Flags().StringVarP(&options.SelectedLayer, "layer", "l", "", "separate layer name to export")
 	cmd.Flags().StringVar(&options.Sizes, "sizes", "", "comma separated list of sizes (e.g., \"64x64,128x128\")")
 	cmd.Flags().StringVar(&options.Scales, "scales", "", "comma separated list of scales (e.g., \"1,2,3\")")
 	cmd.Flags().StringVar(&options.FramesIncluded, "frames", "0", "frames included template - zero based (e.g. '0:2', '0', '*'")
 
+	_ = cmd.RegisterFlagCompletionFunc("layer", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		writtenFilename := options.SpriteFilename
+		if writtenFilename == "" {
+			return nil, cobra.ShellCompDirectiveNoFileComp
+		}
+
+		if !files.CheckFileExists(writtenFilename, false) || !files.CheckFileExtension(writtenFilename, aseprite.SpritesExtensions()...) {
+			return nil, cobra.ShellCompDirectiveNoFileComp
+		}
+
+		cfg, err := env.Config()
+		if err != nil {
+			return nil, cobra.ShellCompDirectiveNoFileComp
+		}
+
+		aseCli := aseprite.NewCLI(cfg.AsepritePath, cfg.ScriptDirPath, cfg.FromSteam)
+		cmdLayers := &helpers.SpriteLayersNames{SpriteFilename: writtenFilename}
+		output, err := aseCli.ExecuteCommandOutput(cmdLayers)
+		if err != nil {
+			return nil, cobra.ShellCompDirectiveNoFileComp
+		}
+
+		layers := strings.Split(strings.TrimSpace(output), "\n")
+		var suggestions []string
+		for _, layer := range layers {
+			if layer != "" && strings.HasPrefix(layer, toComplete) {
+				suggestions = append(suggestions, layer)
+			}
+		}
+
+		return suggestions, cobra.ShellCompDirectiveNoFileComp
+	})
+
 	return cmd
+}
+
+func (h *exportHandler) collectSpriteLayers() error {
+	spriteLayersCmd := &helpers.SpriteLayersNames{
+		SpriteFilename: h.options.SpriteFilename,
+	}
+
+	output, err := h.asepriteCli.ExecuteCommandOutput(spriteLayersCmd)
+	if err != nil {
+		return errors.New("Failed to export sprite layers: " + err.Error())
+	}
+
+	h.spriteLayers = strings.Split(output, "\n")
+
+	if len(h.spriteLayers) == 0 {
+		return errors.New("failed to export sprite layers")
+	}
+
+	return nil
 }
 
 func (h *exportHandler) export() error {
@@ -127,6 +184,14 @@ func (h *exportHandler) export() error {
 		FramesIncluded: opts.FramesIncluded,
 	}
 
+	if len(opts.SelectedLayer) != 0 {
+		if strings.HasSuffix(opts.SelectedLayer, "\r") {
+			opts.SelectedLayer = opts.SelectedLayer[:len(opts.SelectedLayer)-1]
+		}
+
+		exportCmd.SelectedLayerName = opts.SelectedLayer
+	}
+
 	switch {
 	case opts.Scales != "":
 		if err := ValidateScalesInput(opts.Scales); err != nil {
@@ -154,8 +219,9 @@ func (h *exportHandler) export() error {
 	return nil
 }
 
-func (o *exportOptions) collect(cfg *config.Config) error {
-	if err := o.collectSourceInfo(cfg); err != nil {
+func (h *exportHandler) collect() error {
+	o := h.options
+	if err := o.collectSourceInfo(h.config); err != nil {
 		return err
 	}
 
@@ -164,6 +230,15 @@ func (o *exportOptions) collect(cfg *config.Config) error {
 	}
 
 	if err := o.collectFramesInfo(); err != nil {
+		return err
+	}
+
+	err := h.collectSpriteLayers()
+	if err != nil {
+		return err
+	}
+
+	if err := o.collectLayerInfo(h.spriteLayers); err != nil {
 		return err
 	}
 
@@ -223,14 +298,42 @@ func (o *exportOptions) collectFramesInfo() error {
 	return nil
 }
 
+func (o *exportOptions) collectLayerInfo(spriteLayers []string) error {
+	var askLayerSelection bool
+	question := &survey.Confirm{
+		Message: "Do you want to choose one layer to export?",
+		Default: false,
+	}
+
+	if err := survey.AskOne(question, &askLayerSelection); err != nil {
+		return err
+	}
+
+	if askLayerSelection {
+		if err := survey.AskOne(
+			&survey.Select{
+				Message: "Choose a layer to export:",
+				Default: spriteLayers[0],
+				Options: spriteLayers,
+			},
+			&o.SelectedLayer,
+		); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (o *exportOptions) spriteSuggestions(cfg *config.Config) func(string) []string {
 	return func(toComplete string) []string {
 		var suggestions []string
 		for _, folder := range cfg.SpritesFoldersPaths {
 			fs, _ := files.FindFilesOfExtensionsRecursiveFlatten(folder, aseprite.SpritesExtensions()...)
+
 			for _, file := range fs {
-				if strings.HasPrefix(file, toComplete) {
-					suggestions = append(suggestions)
+				if strings.Contains(file, toComplete) {
+					suggestions = append(suggestions, file)
 				}
 			}
 		}

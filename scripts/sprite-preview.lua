@@ -15,7 +15,7 @@ local COLOR = {
     WARNING = { 200, 100, 100 },
     INFO = { 50, 200, 255 },
     TIP_HEADER = { 255, 200, 0 }, -- Yellow
-    TIP_BODY = { 150, 150, 150 }    -- Grey
+    TIP_BODY = { 150, 150, 150 }  -- Grey
 }
 
 local TRANSPARENT = "  " -- Two spaces for transparent pixels
